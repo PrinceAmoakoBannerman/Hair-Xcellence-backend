@@ -164,3 +164,23 @@ input[type=checkbox], input[type=radio] { accent-color: var(--hx-burgundy); }
 .date-hierarchy .btn { --bs-btn-padding-y: 4px; --bs-btn-padding-x: 12px; font-size: 13px; line-height: 1.3; border-radius: 99px !important; flex: 0 0 auto; }
 .date-hierarchy .btn-primary { --bs-btn-bg: #fff; --bs-btn-color: var(--hx-burgundy); --bs-btn-border-color: #d8c3c9; --bs-btn-hover-bg: var(--hx-burgundy); --bs-btn-hover-color: #fff; --bs-btn-hover-border-color: var(--hx-burgundy); }
 .hx-kpi strong { font-size: clamp(18px, 1.55vw, 24px); white-space: nowrap; }
+
+/* Where the order is going */
+.hx-deliver { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; padding: 16px 18px; border: 1px solid #e4d6c3; border-left: 3px solid var(--hx-gold); border-radius: 8px; background: #fff; max-width: 720px; }
+.hx-deliver > div { display: flex; flex-direction: column; gap: 3px; font-size: 14px; }
+.hx-deliver strong { font-size: 16px; font-weight: 600; }
+.hx-deliver .hx-btn { align-self: flex-start; margin-top: 8px; }
+.hx-regions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.hx-regions a { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 8px 10px; border-radius: 6px; color: var(--hx-ink) !important; text-decoration: none !important; font-size: 14px; }
+.hx-regions a:hover { background: #f6ede2; }
+.hx-regions i { grid-column: 1; height: 5px; background: #efe4d5; border-radius: 3px; overflow: hidden; align-self: center; }
+.hx-regions em { display: block; height: 100%; background: var(--hx-gold); }
+.hx-regions small { text-align: right; }
+@media (max-width: 700px) { .hx-deliver { grid-template-columns: 1fr; } }
+.hx-span-3 .hx-regions { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px 14px; }
+
+/* Orders list: keep number, date and total on one line; room for the status dropdown */
+#result_list .field-number, #result_list .field-total_ghs, #result_list .field-paid_at { white-space: nowrap; }
+#result_list .field-created_at { white-space: nowrap; font-size: 13px; }
+#result_list .field-status select { min-width: 128px; }
+#result_list .field-contact { white-space: nowrap; }

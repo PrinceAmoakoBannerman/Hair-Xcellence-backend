@@ -184,6 +184,7 @@ JAZZMIN_SETTINGS = {
     "usermenu_links": [
         {"name": "View store", "url": STORE_URL, "new_window": True, "icon": "fas fa-store"},
     ],
+    "hide_apps": ["authtoken"],  # sign-in tokens are internal
     "show_sidebar": True,
     "navigation_expanded": True,
     "order_with_respect_to": ["orders", "orders.Order", "orders.Payment", "orders.Customer", "catalog", "catalog.Product", "catalog.Category", "auth"],

@@ -84,7 +84,7 @@
       {% if s.rushed %}
         <ul class="hx-list">
           {% for o in s.rushed %}
-            <li><a href="{% url 'admin:orders_order_change' o.pk %}"><b>{{ o.number }}</b> · {{ o.name }}</a>
+            <li><a href="{% url 'admin:orders_order_change' o.pk %}"><b>{{ o.number }}</b> · {{ o.name }}<br><small class="hx-muted">→ {{ o.city }}, {{ o.region }}</small></a>
               <span class="hx-pill {% if o.rush_production == 'Priority' %}priority{% else %}express{% endif %}">{{ o.rush_production }}</span>
               <small class="hx-muted">{{ o.created_at|timesince }} ago</small></li>
           {% endfor %}
@@ -121,6 +121,21 @@
       {% endif %}
     </section>
 
+    {# ── Where orders are going ── #}
+    <section class="card hx-card hx-span-3">
+      <div class="hx-card-head"><h3>Where orders are going · 30 days</h3></div>
+      {% if s.regions %}
+        <ul class="hx-regions">
+          {% for r in s.regions %}
+            <li><a href="{% url 'admin:orders_order_changelist' %}?region__exact={{ r.region|urlencode }}">
+              <span>{{ r.region }}</span><b>{{ r.n }}</b>
+              <i><em style="width: {{ r.pct }}%"></em></i>
+              <small class="hx-muted">GH₵ {{ r.total|floatformat:"0"|intcomma }}</small></a></li>
+          {% endfor %}
+        </ul>
+      {% else %}<p class="hx-empty">No orders yet.</p>{% endif %}
+    </section>
+
     {# ── Recent orders ── #}
     <section class="card hx-card hx-span-3">
       <div class="hx-card-head">
@@ -130,12 +145,13 @@
       {% if s.recent %}
         <div class="table-responsive">
           <table class="table hx-table">
-            <thead><tr><th>Order</th><th>Customer</th><th>Placed</th><th>Total</th><th>Status</th><th>Payment</th></tr></thead>
+            <thead><tr><th>Order</th><th>Customer</th><th>Deliver to</th><th>Placed</th><th>Total</th><th>Status</th><th>Payment</th></tr></thead>
             <tbody>
               {% for o in s.recent %}
                 <tr>
                   <td><a href="{% url 'admin:orders_order_change' o.pk %}"><b>{{ o.number }}</b></a></td>
                   <td>{{ o.name }}<br><small class="hx-muted">{{ o.phone }}</small></td>
+                  <td>{{ o.city }}, {{ o.region }}<br><small class="hx-muted">{{ o.delivery_method }}</small></td>
                   <td>{{ o.created_at|date:"d M, H:i" }}</td>
                   <td>GH₵ {{ o.total|floatformat:"0"|intcomma }}</td>
                   <td><span class="hx-pill {{ o.status }}">{{ o.get_status_display }}</span></td>

@@ -71,6 +71,13 @@ def dashboard_stats() -> dict:
         .distinct().order_by("created_at")[:6]
     )
 
+    regions = list(
+        live.filter(created_at__gte=d30).values("region").annotate(n=Count("id"), total=Sum("total")).order_by("-n")[:6]
+    )
+    top_region = max([r["n"] for r in regions] + [1])
+    for r in regions:
+        r["pct"] = round(r["n"] / top_region * 100)
+
     customers = Customer.objects.all()
     repeat = customers.annotate(n=Count("orders")).filter(n__gt=1).count()
 
@@ -92,6 +99,7 @@ def dashboard_stats() -> dict:
         "top_products": list(top_products),
         "rushed": list(rushed),
         "recent": list(Order.objects.order_by("-created_at")[:8]),
+        "regions": regions,
         "customers_total": customers.count(),
         "customers_new_30": customers.filter(created_at__gte=d30).count(),
         "customers_repeat": repeat,

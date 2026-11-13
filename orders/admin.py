@@ -104,18 +104,18 @@ class ProductionFilter(admin.SimpleListFilter):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ("number", "created_at", "customer_name", "total_ghs", "status", "payment_badge", "rush", "contact")
+    list_display = ("number", "created_at", "customer_name", "deliver_to", "total_ghs", "status", "payment_badge", "rush", "contact")
     list_display_links = ("number",)
-    list_filter = ("status", "payment_status", ProductionFilter, "delivery_method", "payment_method", "region", "created_at")
+    list_filter = ("status", "payment_status", ProductionFilter, "delivery_method", "payment_method", "region", "city", "created_at")
     list_editable = ("status",)
-    search_fields = ("number", "name", "email", "phone", "payment_reference")
+    search_fields = ("number", "name", "email", "phone", "payment_reference", "address", "city")
     date_hierarchy = "created_at"
     list_per_page = 30
     inlines = [OrderItemInline]
     actions = ORDER_ACTIONS + PAYMENT_ACTIONS
-    readonly_fields = ("number", "customer_link", "user", "contact", "created_at", "updated_at", "paid_at", "subtotal", "delivery_fee", "total")
+    readonly_fields = ("number", "delivery_box", "customer_link", "user", "contact", "created_at", "updated_at", "paid_at", "subtotal", "delivery_fee", "total")
     fieldsets = (
-        ("Order", {"fields": ("number", "status", "created_at", "updated_at", "note")}),
+        ("Order", {"fields": ("number", "status", "delivery_box", "created_at", "updated_at", "note")}),
         ("Customer", {"fields": ("customer_link", "user", "contact", "name", "email", "phone", "address", "city", "region")}),
         ("Delivery & payment", {"fields": ("delivery_method", "delivery_fee", "payment_method", "payment_status", "payment_reference", "paid_at")}),
         ("Totals", {"fields": ("subtotal", "total")}),
@@ -145,6 +145,26 @@ class OrderAdmin(admin.ModelAdmin):
     @admin.display(description="Contact")
     def contact(self, obj):
         return contact_buttons(obj.name, obj.phone, obj.number)
+
+    @admin.display(description="Deliver to", ordering="region")
+    def deliver_to(self, obj):
+        return format_html("<b>{}</b>, {}<br><small class='hx-muted'>{}</small>", obj.city, obj.region, obj.delivery_method)
+
+    @admin.display(description="Delivery")
+    def delivery_box(self, obj):
+        if not obj.pk:
+            return "—"
+        query = quote(f"{obj.address}, {obj.city}, {obj.region}, Ghana")
+        return format_html(
+            '<div class="hx-deliver">'
+            '<div class="hx-deliver-addr"><span class="hx-kpi-label">Deliver to</span>'
+            '<strong>{}</strong><span>{}</span><span>{}, {}</span><span>{}</span></div>'
+            '<div class="hx-deliver-meta"><span class="hx-kpi-label">Method</span><strong>{}</strong><span>Fee {}</span>'
+            '<a class="hx-btn" href="https://www.google.com/maps/search/?api=1&query={}" target="_blank" rel="noopener">Open in Google Maps</a></div>'
+            '</div>',
+            obj.name, obj.address, obj.city, obj.region, obj.phone,
+            obj.delivery_method, ghs(obj.delivery_fee), query,
+        )
 
     @admin.display(description="Payment", ordering="payment_status")
     def payment_badge(self, obj):
