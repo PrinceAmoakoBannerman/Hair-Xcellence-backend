@@ -1,0 +1,340 @@
+[
+  {
+    "slug": "hd-lace-body-wave-wig",
+    "name": "HD Lace Body Wave Wig",
+    "kind": "wig",
+    "categories": [
+      "HD Lace Wigs",
+      "Frontal Wigs",
+      "Body Wave"
+    ],
+    "texture": "Body Wave",
+    "base_price": 2450,
+    "sale": 0,
+    "availability": "In stock",
+    "default_colour": "",
+    "tag": "Bestseller",
+    "short": "Body wave wig on a 13×4 HD lace frontal.",
+    "description": "Our best-selling wig. 100% human hair in a soft body wave, on a 13×4 HD lace frontal that blends with most skin tones. Pre-plucked hairline, adjustable straps and combs.",
+    "detail": "HD Lace · Frontal · Body Wave",
+    "is_new": false,
+    "is_bestseller": true,
+    "sort_order": 0,
+    "popularity": 214,
+    "images": [
+      "/images/bodywave-brown-mannequin.webp",
+      "/images/bodywave-white-mannequin.webp",
+      "https://images.unsplash.com/photo-1560264641-1b5191cc63e2?auto=format&fit=crop&w=1100&q=85",
+      "https://images.unsplash.com/photo-1663582815412-665909d70e01?auto=format&fit=crop&w=1100&q=85"
+    ]
+  },
+  {
+    "slug": "glueless-water-wave-wig",
+    "name": "Glueless Water Wave Wig",
+    "kind": "wig",
+    "categories": [
+      "Glueless Wigs",
+      "Closure Wigs",
+      "Curly Hair"
+    ],
+    "texture": "Curly",
+    "base_price": 2150,
+    "sale": 0,
+    "availability": "In stock",
+    "default_colour": "",
+    "tag": "New",
+    "short": "Water wave wig on a glueless closure cap.",
+    "description": "Glueless closure wig with an elastic band and pre-cut lace, so you can put it on without glue. Water wave texture that can be worn wet-look or fluffed out.",
+    "detail": "Glueless · Closure · Water Wave",
+    "is_new": true,
+    "is_bestseller": false,
+    "sort_order": 1,
+    "popularity": 96,
+    "images": [
+      "/images/water-wave-mannequin.webp",
+      "/images/deep-curly.webp",
+      "/images/long-water-wave.webp",
+      "https://images.unsplash.com/photo-1570570525340-cc356a1383fb?auto=format&fit=crop&w=1300&q=85"
+    ]
+  },
+  {
+    "slug": "bone-straight-hd-lace-frontal-wig",
+    "name": "Bone Straight HD Lace Frontal Wig",
+    "kind": "wig",
+    "categories": [
+      "HD Lace Wigs",
+      "Frontal Wigs",
+      "Straight Hair"
+    ],
+    "texture": "Straight",
+    "base_price": 2300,
+    "sale": 0,
+    "availability": "Low stock",
+    "default_colour": "",
+    "tag": "Bestseller",
+    "short": "Bone straight wig on a 13×4 HD lace frontal.",
+    "description": "Single-donor bone straight hair with a natural shine. Stays smooth after washing and can be curled with heat protectant.",
+    "detail": "HD Lace · Frontal · Straight",
+    "is_new": false,
+    "is_bestseller": true,
+    "sort_order": 2,
+    "popularity": 158,
+    "images": [
+      "/images/straight-side-profile.webp",
+      "/images/straight-long.webp",
+      "/images/layered-straight.webp",
+      "https://images.unsplash.com/photo-1663582815412-665909d70e01?auto=format&fit=crop&w=1100&q=85"
+    ]
+  },
+  {
+    "slug": "layered-straight-glueless-wig",
+    "name": "Layered Straight Glueless Wig",
+    "kind": "wig",
+    "categories": [
+      "Glueless Wigs",
+      "Closure Wigs",
+      "Straight Hair"
+    ],
+    "texture": "Straight",
+    "base_price": 1950,
+    "sale": 0,
+    "availability": "In stock",
+    "default_colour": "",
+    "tag": "New",
+    "short": "Layered straight wig with flipped ends, glueless.",
+    "description": "Straight hair cut into face-framing layers with the ends flipped out. Comes on a glueless closure cap with an elastic band.",
+    "detail": "Glueless · Closure · Layered Straight",
+    "is_new": true,
+    "is_bestseller": false,
+    "sort_order": 3,
+    "popularity": 77,
+    "images": [
+      "/images/layered-straight.webp",
+      "/images/straight-side-profile.webp",
+      "/images/straight-long.webp"
+    ]
+  },
+  {
+    "slug": "hd-lace-deep-wave-frontal-wig",
+    "name": "HD Lace Deep Wave Frontal Wig",
+    "kind": "wig",
+    "categories": [
+      "HD Lace Wigs",
+      "Frontal Wigs",
+      "Deep Wave"
+    ],
+    "texture": "Deep Wave",
+    "base_price": 2550,
+    "sale": 0,
+    "availability": "Made to order",
+    "default_colour": "",
+    "tag": "New",
+    "short": "Deep wave wig on a 13×6 HD lace frontal.",
+    "description": "Defined deep wave texture on a 13×6 HD frontal, which gives you more room to part the hair. Made to order.",
+    "detail": "HD Lace · Frontal · Deep Wave",
+    "is_new": true,
+    "is_bestseller": false,
+    "sort_order": 4,
+    "popularity": 64,
+    "images": [
+      "/images/bodywave-white-mannequin.webp",
+      "/images/bodywave-brown-mannequin.webp",
+      "https://images.unsplash.com/photo-1560264641-1b5191cc63e2?auto=format&fit=crop&w=1100&q=85",
+      "https://images.unsplash.com/photo-1791748825821-f1faa487f3ec?auto=format&fit=crop&w=1100&q=85"
+    ]
+  },
+  {
+    "slug": "custom-made-to-order-wig",
+    "name": "Custom Made-to-Order Wig",
+    "kind": "wig",
+    "categories": [
+      "HD Lace Wigs",
+      "Glueless Wigs",
+      "Loose Wave"
+    ],
+    "texture": "Loose Wave",
+    "base_price": 2600,
+    "sale": 0,
+    "availability": "Made to order",
+    "default_colour": "",
+    "tag": "Custom",
+    "short": "A wig made to your exact choices.",
+    "description": "Choose the length, texture, lace, density, colour, cap size and finishing. We make the wig to your order and ship it in 10–15 working days.",
+    "detail": "Bespoke · Made to order",
+    "is_new": false,
+    "is_bestseller": false,
+    "sort_order": 5,
+    "popularity": 41,
+    "images": [
+      "/images/hero-colour-collection.webp",
+      "/images/hero-duo.webp",
+      "/images/burgundy-body-wave.webp",
+      "https://images.unsplash.com/photo-1663582815412-665909d70e01?auto=format&fit=crop&w=1100&q=85",
+      "/images/long-water-wave.webp"
+    ]
+  },
+  {
+    "slug": "burgundy-99j-body-wave-glueless-wig",
+    "name": "Burgundy 99J Body Wave Glueless Wig",
+    "kind": "wig",
+    "categories": [
+      "Glueless Wigs",
+      "Closure Wigs",
+      "Body Wave"
+    ],
+    "texture": "Body Wave",
+    "base_price": 1950,
+    "sale": 0,
+    "availability": "In stock",
+    "default_colour": "Burgundy 99J",
+    "tag": "New",
+    "short": "Burgundy 99J body wave wig, glueless.",
+    "description": "Body wave hair coloured burgundy 99J, on a glueless closure cap with pre-cut lace. Also available in natural black.",
+    "detail": "Glueless · Closure · Burgundy 99J",
+    "is_new": true,
+    "is_bestseller": false,
+    "sort_order": 6,
+    "popularity": 52,
+    "images": [
+      "/images/burgundy-body-wave.webp",
+      "/images/bodywave-white-mannequin.webp",
+      "/images/bodywave-brown-mannequin.webp",
+      "https://images.unsplash.com/photo-1560264641-1b5191cc63e2?auto=format&fit=crop&w=1100&q=85"
+    ]
+  },
+  {
+    "slug": "water-wave-hd-lace-frontal-wig",
+    "name": "Water Wave HD Lace Frontal Wig",
+    "kind": "wig",
+    "categories": [
+      "HD Lace Wigs",
+      "Frontal Wigs",
+      "Curly Hair"
+    ],
+    "texture": "Curly",
+    "base_price": 2700,
+    "sale": 0,
+    "availability": "Low stock",
+    "default_colour": "",
+    "tag": "Bestseller",
+    "short": "Long water wave wig on a 13×4 HD lace frontal.",
+    "description": "Full water wave texture on a 13×4 HD frontal with a pre-plucked hairline. Best kept moisturised with a leave-in conditioner.",
+    "detail": "HD Lace · Frontal · Water Wave",
+    "is_new": false,
+    "is_bestseller": true,
+    "sort_order": 7,
+    "popularity": 88,
+    "images": [
+      "/images/long-water-wave.webp",
+      "/images/water-wave-mannequin.webp",
+      "/images/deep-curly.webp",
+      "/images/bodywave-brown-mannequin.webp"
+    ]
+  },
+  {
+    "slug": "straight-hair-bundles",
+    "name": "Straight Hair Bundles",
+    "kind": "bundle",
+    "categories": [
+      "Hair Bundles",
+      "Straight Hair"
+    ],
+    "texture": "Straight",
+    "base_price": 650,
+    "sale": 0.3,
+    "availability": "In stock",
+    "default_colour": "",
+    "tag": "Sale",
+    "short": "Straight human hair bundles. Price per bundle.",
+    "description": "Single-donor straight bundles with full ends and minimal shedding. Most installs use three bundles; mix lengths for a layered look.",
+    "detail": "Bundle · Straight",
+    "is_new": false,
+    "is_bestseller": true,
+    "sort_order": 8,
+    "popularity": 132,
+    "images": [
+      "/images/straight-long.webp",
+      "/images/straight-side-profile.webp",
+      "https://images.unsplash.com/photo-1754327748419-715068469357?auto=format&fit=crop&w=1100&q=85"
+    ]
+  },
+  {
+    "slug": "body-wave-hair-bundles",
+    "name": "Body Wave Hair Bundles",
+    "kind": "bundle",
+    "categories": [
+      "Hair Bundles",
+      "Body Wave"
+    ],
+    "texture": "Body Wave",
+    "base_price": 690,
+    "sale": 0.3,
+    "availability": "In stock",
+    "default_colour": "",
+    "tag": "Sale",
+    "short": "Body wave human hair bundles. Price per bundle.",
+    "description": "Body wave bundles that hold a curl and go back to their wave after washing. Most installs use three or four bundles.",
+    "detail": "Bundle · Body Wave",
+    "is_new": false,
+    "is_bestseller": false,
+    "sort_order": 9,
+    "popularity": 101,
+    "images": [
+      "/images/body-wave-bundles.webp",
+      "/images/bodywave-white-mannequin.webp",
+      "/images/bodywave-brown-mannequin.webp"
+    ]
+  },
+  {
+    "slug": "hd-lace-closure",
+    "name": "HD Lace Closure",
+    "kind": "closure",
+    "categories": [
+      "Closures and Frontals"
+    ],
+    "texture": "Straight",
+    "base_price": 780,
+    "sale": 0.3,
+    "availability": "In stock",
+    "default_colour": "",
+    "tag": "Sale",
+    "short": "HD lace closure, 4×4 or 5×5.",
+    "description": "Thin HD lace closure for a natural-looking part. Choose 4×4 or 5×5, or a frontal size.",
+    "detail": "Closure · HD Lace",
+    "is_new": false,
+    "is_bestseller": false,
+    "sort_order": 10,
+    "popularity": 73,
+    "images": [
+      "/images/water-wave-mannequin.webp",
+      "/images/straight-long.webp",
+      "https://images.unsplash.com/photo-1763771444803-64684b6cae65?auto=format&fit=crop&w=1100&q=85"
+    ]
+  },
+  {
+    "slug": "hd-lace-frontal",
+    "name": "HD Lace Frontal",
+    "kind": "closure",
+    "categories": [
+      "Closures and Frontals"
+    ],
+    "texture": "Body Wave",
+    "base_price": 1150,
+    "sale": 0.3,
+    "availability": "Low stock",
+    "default_colour": "",
+    "tag": "Sale",
+    "short": "Ear-to-ear HD lace frontal, 13×4 or 13×6.",
+    "description": "Pre-plucked HD lace frontal that lets you part the hair anywhere or wear it pulled back.",
+    "detail": "Frontal · HD Lace",
+    "is_new": true,
+    "is_bestseller": false,
+    "sort_order": 11,
+    "popularity": 58,
+    "images": [
+      "/images/bodywave-brown-mannequin.webp",
+      "/images/straight-long.webp",
+      "https://images.unsplash.com/photo-1791748825821-f1faa487f3ec?auto=format&fit=crop&w=1100&q=85"
+    ]
+  }
+]

@@ -1,0 +1,101 @@
+/* Hair Xcellence admin: brand colours on top of Jazzmin 3 (AdminLTE 4 / Bootstrap 5). */
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap');
+
+:root {
+  --hx-burgundy: #641D32;
+  --hx-burgundy-deep: #421321;
+  --hx-gold: #B69A6A;
+  --hx-beige: #F5EBDD;
+  --hx-cream: #FFFCF7;
+  --hx-ink: #30231F;
+  --hx-muted: #76655c;
+  /* Bootstrap 5 tokens */
+  --bs-primary: #641D32;
+  --bs-primary-rgb: 100, 29, 50;
+  --bs-link-color: #641D32;
+  --bs-link-color-rgb: 100, 29, 50;
+  --bs-link-hover-color: #421321;
+  --bs-body-font-family: 'Jost', 'Segoe UI', Arial, sans-serif;
+  --bs-tertiary-bg: #F5EBDD;
+  --bs-tertiary-bg-rgb: 245, 235, 221;
+}
+
+body { font-family: var(--bs-body-font-family); color: var(--hx-ink); }
+
+/* Page background */
+body.bg-body-tertiary, .app-wrapper, .app-main, .app-content, .app-content-header { background: var(--hx-beige) !important; }
+.app-content-header h1, .app-content-header .h1 { font-weight: 600; letter-spacing: -.01em; }
+.card { border: 1px solid #e4d6c3; border-radius: 6px; box-shadow: 0 1px 2px rgba(48, 35, 31, .05); background: var(--hx-cream); }
+.card-header { background: transparent; border-bottom-color: #ecdfce; }
+
+/* Top bar */
+.app-header { background: var(--hx-cream) !important; border-bottom: 1px solid #e4d6c3 !important; }
+.app-header .nav-link { color: var(--hx-ink) !important; }
+.app-header .nav-link:hover { color: var(--hx-burgundy) !important; }
+
+/* Sidebar */
+.app-sidebar { background: var(--hx-burgundy-deep) !important; }
+.sidebar-brand { background: var(--hx-burgundy-deep); border-bottom: 1px solid rgba(255, 255, 255, .08) !important; }
+.sidebar-brand .brand-text { color: #fff !important; letter-spacing: .14em; text-transform: uppercase; font-weight: 600 !important; font-size: 15px; }
+.sidebar-brand .brand-image { border-radius: 8px; box-shadow: none !important; opacity: 1 !important; }
+.app-sidebar .nav-link, .app-sidebar .user-panel a, .app-sidebar .user-panel .info { color: #eadbd6 !important; }
+.app-sidebar .nav-link:hover { background: rgba(255, 255, 255, .06) !important; color: #fff !important; }
+.app-sidebar .nav-link.active { background: var(--hx-burgundy) !important; color: #fff !important; box-shadow: none !important; }
+.app-sidebar .nav-header { color: var(--hx-gold) !important; letter-spacing: .12em; font-size: 11px; text-transform: uppercase; }
+.app-sidebar .nav-icon { color: var(--hx-gold) !important; }
+.app-sidebar .nav-link.active .nav-icon { color: #fff !important; }
+
+/* Buttons and links */
+.btn-primary, .btn-success { --bs-btn-bg: #641D32; --bs-btn-border-color: #641D32; --bs-btn-hover-bg: #421321; --bs-btn-hover-border-color: #421321; --bs-btn-active-bg: #421321; --bs-btn-active-border-color: #421321; }
+.btn-outline-info, .btn-outline-primary {
+  --bs-btn-color: #641D32; --bs-btn-border-color: #d8c3c9; --bs-btn-bg: #fff;
+  --bs-btn-hover-bg: #641D32; --bs-btn-hover-border-color: #641D32; --bs-btn-hover-color: #fff;
+  --bs-btn-active-bg: #421321; --bs-btn-active-border-color: #421321;
+}
+.text-info, .text-primary { color: var(--hx-burgundy) !important; }
+a { color: var(--hx-burgundy); }
+a:hover { color: var(--hx-burgundy-deep); }
+.page-link { color: var(--hx-burgundy); }
+.page-item.active .page-link { background: var(--hx-burgundy); border-color: var(--hx-burgundy); }
+.form-control:focus, .form-select:focus { border-color: var(--hx-gold); box-shadow: 0 0 0 .2rem rgba(182, 154, 106, .25); }
+.form-check-input:checked { background-color: var(--hx-burgundy); border-color: var(--hx-burgundy); }
+
+/* Tabs on the edit pages */
+.nav-tabs .nav-link { color: var(--hx-muted); }
+.nav-tabs .nav-link.active { color: var(--hx-burgundy); border-top: 2px solid var(--hx-burgundy); font-weight: 500; }
+
+/* Tables */
+#result_list thead th, .table thead th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--hx-muted) !important; }
+#result_list thead th a { color: var(--hx-muted) !important; }
+#result_list tbody tr:hover > * { background: #fbf4f1; }
+.table { --bs-table-bg: transparent; }
+
+/* Footer: keep the copyright, hide the theme version */
+.app-footer { background: var(--hx-cream) !important; color: var(--hx-muted); border-top: 1px solid #e4d6c3; }
+.app-footer .float-end { display: none !important; }
+
+/* Login page */
+body.login-page, .login-page { background: var(--hx-beige) !important; }
+.login-page .card { border-top: 3px solid var(--hx-burgundy); }
+.login-logo img { max-width: 260px; }
+
+/* Status pills used in the Orders list */
+.hx-pill { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.hx-pill.confirmed { background: #f1e3e7; color: var(--hx-burgundy); }
+.hx-pill.processing { background: #fbf0dc; color: #8a5a12; }
+.hx-pill.shipped { background: #e3eef8; color: #1f5c8b; }
+.hx-pill.delivered { background: #e3f1e6; color: #2f6b3d; }
+.hx-pill.cancelled, .hx-pill.failed { background: #f3e1e0; color: #a12b22; }
+.hx-pill.pending { background: #f0ece6; color: #6c5f57; }
+.hx-pill.paid { background: #e3f1e6; color: #2f6b3d; }
+.hx-pill.refunded { background: #ece8f5; color: #4b3f80; }
+.hx-thumb { width: 44px; height: 54px; object-fit: cover; border-radius: 4px; background: #eadfd2; }
+
+/* Edit forms: wider text boxes, readable category checkboxes, wrapping sidebar labels */
+.app-content .form-group input[type="text"], .app-content .form-group input[type="number"],
+.app-content .form-group input[type="email"], .app-content .form-group textarea { width: 100%; max-width: 560px; }
+.app-content .form-group textarea { min-height: 120px; }
+#id_categories { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px 18px; padding: 0; margin: 0; list-style: none; }
+#id_categories label { display: flex; align-items: center; gap: 8px; font-weight: 400; margin: 0; cursor: pointer; }
+.app-sidebar .nav-header { white-space: normal; line-height: 1.4; }
+input[type=checkbox], input[type=radio] { accent-color: var(--hx-burgundy); }

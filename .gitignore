@@ -1,0 +1,22 @@
+# Python / virtualenv
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Local data — never commit
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Logs / editor / OS
+*.log
+.vscode/
+.idea/
+.DS_Store
