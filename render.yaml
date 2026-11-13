@@ -16,8 +16,10 @@ services:
         value: 3.12.7
       - key: DJANGO_DEBUG
         value: "False"
+      # 50+ random characters: python -c "import secrets; print(secrets.token_urlsafe(50))"
+      # (Render's generated values are shorter than Django's security check requires.)
       - key: DJANGO_SECRET_KEY
-        generateValue: true
+        sync: false
       # Neon → your project → Connect → connection string (direct, not "pooled"), ends with ?sslmode=require
       - key: DATABASE_URL
         sync: false

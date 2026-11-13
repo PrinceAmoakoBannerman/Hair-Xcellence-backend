@@ -52,7 +52,7 @@ All settings come from environment variables (see `.env.example`). Nothing secre
 | Variable | Purpose |
 |---|---|
 | `DJANGO_DEBUG` | `True` locally, `False` in production |
-| `DJANGO_SECRET_KEY` | Required in production (Render generates one) |
+| `DJANGO_SECRET_KEY` | Required in production: 50+ random characters (`python -c "import secrets; print(secrets.token_urlsafe(50))"`) |
 | `DJANGO_ALLOWED_HOSTS` | Hostnames the backend answers on |
 | `DATABASE_URL` | Postgres connection (Neon in production, local Postgres or SQLite in development) |
 | `CORS_ALLOWED_ORIGINS` | Website URLs allowed to call the API |
