@@ -82,6 +82,7 @@ class Order(models.Model):
     payment_status = models.CharField(max_length=10, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
     payment_reference = models.CharField(max_length=100, blank=True, help_text="Mobile Money / Paystack transaction reference.")
     paid_at = models.DateTimeField(null=True, blank=True)
+    payment_channel = models.CharField(max_length=30, blank=True, help_text="How the customer paid on Paystack, e.g. mobile_money or card.")
 
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
     total = models.DecimalField(max_digits=12, decimal_places=2)

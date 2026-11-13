@@ -118,11 +118,11 @@ class OrderAdmin(admin.ModelAdmin):
     list_per_page = 30
     inlines = [OrderItemInline]
     actions = ORDER_ACTIONS + PAYMENT_ACTIONS
-    readonly_fields = ("number", "delivery_box", "customer_link", "user", "contact", "created_at", "updated_at", "paid_at", "subtotal", "delivery_fee", "total")
+    readonly_fields = ("number", "delivery_box", "customer_link", "user", "contact", "created_at", "updated_at", "paid_at", "payment_channel", "subtotal", "delivery_fee", "total")
     fieldsets = (
         ("Order", {"fields": ("number", "status", "delivery_box", "created_at", "updated_at", "note")}),
         ("Customer", {"fields": ("customer_link", "user", "contact", "name", "email", "phone", "address", "city", "region")}),
-        ("Delivery & payment", {"fields": ("delivery_method", "delivery_fee", "payment_method", "payment_status", "payment_reference", "paid_at")}),
+        ("Delivery & payment", {"fields": ("delivery_method", "delivery_fee", "payment_method", "payment_status", "payment_channel", "payment_reference", "paid_at")}),
         ("Totals", {"fields": ("subtotal", "total")}),
     )
 
@@ -191,15 +191,15 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ("number", "created_at", "name", "payment_method", "total_ghs", "payment_badge", "payment_reference", "paid_at")
+    list_display = ("number", "created_at", "name", "payment_method", "total_ghs", "payment_badge", "channel", "payment_reference", "paid_at")
     list_display_links = ("number",)
     list_filter = ("payment_status", "payment_method", "paid_at", "created_at")
     list_editable = ("payment_reference",)
     search_fields = ("number", "name", "phone", "payment_reference")
     date_hierarchy = "created_at"
     actions = PAYMENT_ACTIONS
-    fields = ("number", "name", "phone", "payment_method", "total", "payment_status", "payment_reference", "paid_at", "note")
-    readonly_fields = ("number", "name", "phone", "payment_method", "total", "paid_at")
+    fields = ("number", "name", "phone", "payment_method", "total", "payment_status", "payment_channel", "payment_reference", "paid_at", "note")
+    readonly_fields = ("number", "name", "phone", "payment_method", "total", "paid_at", "payment_channel")
 
     def has_add_permission(self, request):
         return False
@@ -214,6 +214,10 @@ class PaymentAdmin(admin.ModelAdmin):
     @admin.display(description="Status", ordering="payment_status")
     def payment_badge(self, obj):
         return pill(obj.payment_status, obj.get_payment_status_display())
+
+    @admin.display(description="Paid via")
+    def channel(self, obj):
+        return {"mobile_money": "MoMo (Paystack)", "card": "Card (Paystack)"}.get(obj.payment_channel, obj.payment_channel or "—")
 
     def changelist_view(self, request, extra_context=None):
         qs = Order.objects.exclude(status=Order.Status.CANCELLED)

@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "catalog",
     "orders",
     "accounts",
+    "payments",
 ]
 
 MIDDLEWARE = [
@@ -117,10 +118,14 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 CLOUDINARY_URL = os.environ.get("CLOUDINARY_URL", "")
+# …or the three values separately (read directly by the Cloudinary library).
+CLOUDINARY_ENABLED = bool(CLOUDINARY_URL) or all(
+    os.environ.get(k) for k in ("CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET")
+)
 
 STORAGES = {
     "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage" if CLOUDINARY_URL
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage" if CLOUDINARY_ENABLED
         else "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
@@ -163,6 +168,10 @@ if not DEBUG:
 
 # ── Admin theme (Jazzmin) ─────────────────────────────────────────────
 STORE_URL = os.environ.get("STORE_URL", "https://hair-xcellence.vercel.app")
+
+# Paystack (online MoMo / card payments). Secret key only — it never leaves the server.
+# Empty = online payment switched off; orders are still placed and paid manually.
+PAYSTACK_SECRET_KEY = os.environ.get("PAYSTACK_SECRET_KEY", "")
 
 JAZZMIN_SETTINGS = {
     "site_title": "Hair Xcellence admin",
