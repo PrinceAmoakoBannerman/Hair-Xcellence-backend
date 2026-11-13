@@ -41,7 +41,7 @@ class Product(models.Model):
     texture = models.CharField(max_length=20, choices=Texture.choices, default=Texture.STRAIGHT)
     base_price = models.DecimalField(
         max_digits=10, decimal_places=2,
-        help_text="Price in GH₵ for the shortest length with the default options.",
+        help_text="Starting price in GH₵, shown on the website as \"from GH₵ …\" (10\" length, cheapest options). Options chosen by the customer add to this.",
     )
     sale = models.DecimalField(
         max_digits=4, decimal_places=2, default=Decimal("0"),

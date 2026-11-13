@@ -1,0 +1,155 @@
+{% extends "admin/base_site.html" %}
+{% load i18n humanize %}
+
+{% block bodyclass %}{{ block.super }} dashboard hx-dash{% endblock %}
+{% block content_title %}Store overview{% endblock %}
+{% block breadcrumbs %}
+  <ol class="breadcrumb"><li class="breadcrumb-item">{% now "l, j F Y" %}</li></ol>
+{% endblock %}
+
+{% block content %}
+{% with s=stats %}
+<div class="hx-dash-wrap">
+
+  {# ── Key numbers ── #}
+  <section class="hx-kpis">
+    <a class="hx-kpi gold" href="{% url 'admin:orders_payment_changelist' %}?payment_status__exact=paid">
+      <span class="hx-kpi-label">Revenue today</span>
+      <strong>GH₵ {{ s.revenue_today|floatformat:"0"|intcomma }}</strong>
+      <small>7 days · GH₵ {{ s.revenue_7|floatformat:"0"|intcomma }}</small>
+    </a>
+    <a class="hx-kpi" href="{% url 'admin:orders_payment_changelist' %}?payment_status__exact=paid">
+      <span class="hx-kpi-label">Revenue · 30 days</span>
+      <strong>GH₵ {{ s.revenue_30|floatformat:"0"|intcomma }}</strong>
+      <small>Avg. order GH₵ {{ s.avg_order|floatformat:"0"|intcomma }}</small>
+    </a>
+    <a class="hx-kpi" href="{% url 'admin:orders_order_changelist' %}">
+      <span class="hx-kpi-label">Orders today</span>
+      <strong>{{ s.orders_today }}</strong>
+      <small>{{ s.orders_7 }} this week · {{ s.orders_30 }} in 30 days</small>
+    </a>
+    <a class="hx-kpi warn" href="{% url 'admin:orders_payment_changelist' %}?payment_status__exact=pending">
+      <span class="hx-kpi-label">Awaiting payment</span>
+      <strong>{{ s.pending_count }}</strong>
+      <small>GH₵ {{ s.pending_total|floatformat:"0"|intcomma }} to collect</small>
+    </a>
+    <a class="hx-kpi" href="{% url 'admin:orders_order_changelist' %}?status__in=confirmed,processing">
+      <span class="hx-kpi-label">To make &amp; ship</span>
+      <strong>{{ s.to_ship }}</strong>
+      <small>Confirmed or in production</small>
+    </a>
+    <a class="hx-kpi" href="{% url 'admin:orders_customer_changelist' %}">
+      <span class="hx-kpi-label">Customers</span>
+      <strong>{{ s.customers_total }}</strong>
+      <small>{{ s.customers_new_30 }} new · {{ s.customers_repeat }} returning</small>
+    </a>
+  </section>
+
+  <div class="hx-grid">
+    {# ── Sales chart ── #}
+    <section class="card hx-card hx-span-2">
+      <div class="hx-card-head">
+        <h3>Sales · last 14 days</h3>
+        <span class="hx-muted">Paid: GH₵ {{ s.chart_total|floatformat:"0"|intcomma }}</span>
+      </div>
+      <div class="hx-chart" role="img" aria-label="Paid sales per day for the last 14 days">
+        {% for d in s.chart %}
+          <div class="hx-bar" title="{{ d.label }} · GH₵ {{ d.total|floatformat:'0'|intcomma }} · {{ d.orders }} order{{ d.orders|pluralize }}">
+            <i style="height: {{ d.pct }}%"></i>
+            <span>{{ d.short }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      {% if not s.chart_total %}<p class="hx-empty">No paid orders in the last 14 days yet. Mark orders as paid to see them here.</p>{% endif %}
+    </section>
+
+    {# ── Pipeline ── #}
+    <section class="card hx-card">
+      <div class="hx-card-head"><h3>Order pipeline</h3></div>
+      <ol class="hx-pipeline">
+        {% for p in s.pipeline %}
+          <li><a href="{% url 'admin:orders_order_changelist' %}?status__exact={{ p.key }}">
+            <span class="hx-pill {{ p.key }}">{{ p.label }}</span><b>{{ p.count }}</b></a></li>
+        {% endfor %}
+        <li class="muted"><a href="{% url 'admin:orders_order_changelist' %}?status__exact=cancelled"><span class="hx-pill cancelled">Cancelled</span><b>{{ s.cancelled }}</b></a></li>
+      </ol>
+    </section>
+
+    {# ── Rush orders ── #}
+    <section class="card hx-card">
+      <div class="hx-card-head">
+        <h3>Rush orders in production</h3>
+        <a href="{% url 'admin:orders_order_changelist' %}?production=rushed">View all</a>
+      </div>
+      {% if s.rushed %}
+        <ul class="hx-list">
+          {% for o in s.rushed %}
+            <li><a href="{% url 'admin:orders_order_change' o.pk %}"><b>{{ o.number }}</b> · {{ o.name }}</a>
+              <span class="hx-pill {% if o.rush_production == 'Priority' %}priority{% else %}express{% endif %}">{{ o.rush_production }}</span>
+              <small class="hx-muted">{{ o.created_at|timesince }} ago</small></li>
+          {% endfor %}
+        </ul>
+      {% else %}<p class="hx-empty">No express or priority orders waiting.</p>{% endif %}
+    </section>
+
+    {# ── Top products ── #}
+    <section class="card hx-card">
+      <div class="hx-card-head"><h3>Top products · 30 days</h3></div>
+      {% if s.top_products %}
+        <ol class="hx-list hx-ranked">
+          {% for p in s.top_products %}<li><span>{{ p.product_name }}</span><b>{{ p.units }} sold</b></li>{% endfor %}
+        </ol>
+      {% else %}<p class="hx-empty">No sales yet.</p>{% endif %}
+    </section>
+
+    {# ── Catalogue health ── #}
+    <section class="card hx-card">
+      <div class="hx-card-head">
+        <h3>Catalogue</h3>
+        <a href="{% url 'admin:catalog_product_changelist' %}">Products</a>
+      </div>
+      <div class="hx-mini-stats">
+        <div><b>{{ s.products_live }}</b><span>live</span></div>
+        <div><b>{{ s.products_on_sale }}</b><span>on sale</span></div>
+        <div><b>{{ s.products_hidden }}</b><span>hidden</span></div>
+      </div>
+      {% if s.low_stock %}
+        <p class="hx-sub">Low stock</p>
+        <ul class="hx-list">
+          {% for p in s.low_stock %}<li><a href="{% url 'admin:catalog_product_change' p.id %}">{{ p.name }}</a><span class="hx-pill processing">Low stock</span></li>{% endfor %}
+        </ul>
+      {% endif %}
+    </section>
+
+    {# ── Recent orders ── #}
+    <section class="card hx-card hx-span-3">
+      <div class="hx-card-head">
+        <h3>Recent orders</h3>
+        <a href="{% url 'admin:orders_order_changelist' %}">All orders</a>
+      </div>
+      {% if s.recent %}
+        <div class="table-responsive">
+          <table class="table hx-table">
+            <thead><tr><th>Order</th><th>Customer</th><th>Placed</th><th>Total</th><th>Status</th><th>Payment</th></tr></thead>
+            <tbody>
+              {% for o in s.recent %}
+                <tr>
+                  <td><a href="{% url 'admin:orders_order_change' o.pk %}"><b>{{ o.number }}</b></a></td>
+                  <td>{{ o.name }}<br><small class="hx-muted">{{ o.phone }}</small></td>
+                  <td>{{ o.created_at|date:"d M, H:i" }}</td>
+                  <td>GH₵ {{ o.total|floatformat:"0"|intcomma }}</td>
+                  <td><span class="hx-pill {{ o.status }}">{{ o.get_status_display }}</span></td>
+                  <td><span class="hx-pill {{ o.payment_status }}">{{ o.get_payment_status_display }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="hx-empty">No orders yet. Orders placed on the website will appear here.</p>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

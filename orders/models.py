@@ -7,6 +7,44 @@ def new_order_number() -> str:
     return f"HX-{secrets.randbelow(900000) + 100000}"
 
 
+def normalise_phone(phone: str) -> str:
+    """Digits only, with Ghana numbers stored as 233XXXXXXXXX so 024… and +233 24… match."""
+    digits = "".join(ch for ch in phone if ch.isdigit())
+    if digits.startswith("0") and len(digits) == 10:
+        digits = "233" + digits[1:]
+    return digits
+
+
+class Customer(models.Model):
+    """Created automatically from orders (matched by phone number)."""
+
+    name = models.CharField(max_length=120)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=30)
+    phone_key = models.CharField(max_length=20, unique=True, editable=False)
+    city = models.CharField(max_length=80, blank=True)
+    region = models.CharField(max_length=60, blank=True)
+    notes = models.TextField(blank=True, help_text="Private notes, e.g. preferences or cap size.")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.phone})"
+
+    @classmethod
+    def from_order_details(cls, *, name, email, phone, city, region):
+        key = normalise_phone(phone)
+        customer, created = cls.objects.get_or_create(
+            phone_key=key, defaults={"name": name, "email": email, "phone": phone, "city": city, "region": region},
+        )
+        if not created:  # keep their latest details
+            customer.name, customer.email, customer.phone, customer.city, customer.region = name, email or customer.email, phone, city, region
+            customer.save(update_fields=["name", "email", "phone", "city", "region"])
+        return customer
+
+
 class Order(models.Model):
     class Status(models.TextChoices):
         CONFIRMED = "confirmed", "Confirmed"
@@ -22,6 +60,11 @@ class Order(models.Model):
         REFUNDED = "refunded", "Refunded"
 
     number = models.CharField(max_length=20, unique=True, default=new_order_number, editable=False)
+    customer = models.ForeignKey(Customer, null=True, blank=True, related_name="orders", on_delete=models.SET_NULL)
+    user = models.ForeignKey(
+        "auth.User", null=True, blank=True, related_name="orders", on_delete=models.SET_NULL,
+        help_text="Website account that placed the order (if the customer was signed in).",
+    )
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.CONFIRMED)
 
     # Customer
@@ -37,7 +80,8 @@ class Order(models.Model):
     delivery_fee = models.DecimalField(max_digits=10, decimal_places=2)
     payment_method = models.CharField(max_length=40)
     payment_status = models.CharField(max_length=10, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
-    payment_reference = models.CharField(max_length=100, blank=True, help_text="Paystack reference, once payments are connected.")
+    payment_reference = models.CharField(max_length=100, blank=True, help_text="Mobile Money / Paystack transaction reference.")
+    paid_at = models.DateTimeField(null=True, blank=True)
 
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
     total = models.DecimalField(max_digits=12, decimal_places=2)
@@ -50,6 +94,14 @@ class Order(models.Model):
 
     def __str__(self) -> str:
         return self.number
+
+    def save(self, *args, **kwargs):
+        from django.utils import timezone
+        if self.payment_status == self.PaymentStatus.PAID and not self.paid_at:
+            self.paid_at = timezone.now()
+        elif self.payment_status != self.PaymentStatus.PAID:
+            self.paid_at = None
+        super().save(*args, **kwargs)
 
     @property
     def rush_production(self) -> str:
@@ -78,3 +130,12 @@ class OrderItem(models.Model):
     def summary(self) -> str:
         parts = list(self.options.values()) + list(self.addons)
         return " · ".join(str(p) for p in parts)
+
+
+class Payment(Order):
+    """The same orders, viewed from the payments side in the admin."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "payment"
+        verbose_name_plural = "payments"

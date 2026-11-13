@@ -10,6 +10,18 @@ admin.site.site_title = "Hair Xcellence admin"
 admin.site.index_title = "Store management"
 
 
+# Dashboard: add store stats to the admin home page (templates/admin/index.html).
+_default_index = admin.site.index
+
+
+def _dashboard_index(request, extra_context=None):
+    from orders.dashboard import dashboard_stats
+    return _default_index(request, {**(extra_context or {}), "stats": dashboard_stats()})
+
+
+admin.site.index = _dashboard_index
+
+
 def health(_request):
     return JsonResponse({"status": "ok"})
 
@@ -20,6 +32,7 @@ urlpatterns = [
     path("api/health/", health, name="health"),
     path("api/", include("catalog.urls")),
     path("api/", include("orders.urls")),
+    path("api/", include("accounts.urls")),
 ]
 
 if settings.DEBUG:

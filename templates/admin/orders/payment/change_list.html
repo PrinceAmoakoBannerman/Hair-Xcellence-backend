@@ -1,0 +1,13 @@
+{% extends "admin/change_list.html" %}
+{% load humanize %}
+
+{% block date_hierarchy %}
+  {% if payment_totals %}
+    <section class="hx-kpis hx-kpis-sm">
+      <a class="hx-kpi gold" href="?payment_status__exact=paid"><span class="hx-kpi-label">Paid</span><strong>GH₵ {{ payment_totals.paid|floatformat:"0"|intcomma }}</strong></a>
+      <a class="hx-kpi warn" href="?payment_status__exact=pending"><span class="hx-kpi-label">Awaiting payment</span><strong>GH₵ {{ payment_totals.pending|floatformat:"0"|intcomma }}</strong><small>{{ payment_totals.pending_count }} order{{ payment_totals.pending_count|pluralize }}</small></a>
+      <a class="hx-kpi" href="?payment_status__exact=refunded"><span class="hx-kpi-label">Refunded</span><strong>GH₵ {{ payment_totals.refunded|floatformat:"0"|intcomma }}</strong></a>
+    </section>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

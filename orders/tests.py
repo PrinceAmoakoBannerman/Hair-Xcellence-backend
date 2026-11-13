@@ -24,6 +24,8 @@ class ApiTests(TestCase):
         call_command("seed_products", verbosity=0)
 
     def setUp(self):
+        from django.core.cache import cache
+        cache.clear()  # reset rate limits between tests
         self.api = APIClient()
 
     def test_health(self):
@@ -83,3 +85,57 @@ class ApiTests(TestCase):
             "addons": ["Baby hair"], "quantity": 1,
         }]}
         self.assertEqual(self.api.post("/api/orders/", body, format="json").status_code, 400)
+
+
+class AdminFeatureTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_products", verbosity=0)
+        from django.contrib.auth import get_user_model
+        cls.admin_user = get_user_model().objects.create_superuser("boss", "boss@example.com", "x-test-pass-123")
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()  # reset rate limits between tests
+        self.api = APIClient()
+
+    def _order(self, phone="024 123 4567", qty=1, production="Standard"):
+        body = {**CUSTOMER, "phone": phone, "items": [
+            {"product": WIG, "options": {**DEFAULT_WIG_OPTIONS, "production": production}, "quantity": qty},
+        ]}
+        res = self.api.post("/api/orders/", body, format="json")
+        self.assertEqual(res.status_code, 201, res.content)
+        return Order.objects.get(number=res.json()["number"])
+
+    def test_customer_created_and_matched_across_phone_formats(self):
+        from orders.models import Customer
+        first = self._order(phone="024 123 4567")
+        second = self._order(phone="+233 24 123 4567")
+        self.assertEqual(Customer.objects.count(), 1)
+        self.assertEqual(first.customer_id, second.customer_id)
+        self.assertEqual(first.customer.orders.count(), 2)
+
+    def test_paid_at_follows_payment_status(self):
+        order = self._order()
+        self.assertIsNone(order.paid_at)
+        order.payment_status = Order.PaymentStatus.PAID
+        order.save()
+        self.assertIsNotNone(order.paid_at)
+        order.payment_status = Order.PaymentStatus.REFUNDED
+        order.save()
+        self.assertIsNone(order.paid_at)
+
+    def test_admin_pages_render(self):
+        rushed = self._order(production="Priority")
+        rushed.payment_status = Order.PaymentStatus.PAID
+        rushed.save()
+        self._order()
+        self.client.force_login(self.admin_user)
+        for url in ["/admin/", "/admin/orders/order/", "/admin/orders/order/?production=rushed",
+                    "/admin/orders/payment/", "/admin/orders/customer/", f"/admin/orders/order/{rushed.pk}/change/"]:
+            res = self.client.get(url)
+            self.assertEqual(res.status_code, 200, url)
+        dash = self.client.get("/admin/").content.decode()
+        self.assertIn("Store overview", dash)
+        self.assertIn(rushed.number, dash)  # appears in recent + rush lists
+        self.assertIn("Awaiting payment", self.client.get("/admin/orders/payment/").content.decode())

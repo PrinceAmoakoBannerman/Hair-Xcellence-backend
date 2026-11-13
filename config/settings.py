@@ -44,14 +44,17 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.humanize",
     # third party
     "rest_framework",
+    "rest_framework.authtoken",
     "corsheaders",
     "cloudinary_storage",
     "cloudinary",
     # local
     "catalog",
     "orders",
+    "accounts",
 ]
 
 MIDDLEWARE = [
@@ -71,7 +74,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -125,6 +128,11 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Tests render admin pages without running collectstatic first.
+import sys  # noqa: E402
+if "test" in sys.argv:
+    STORAGES["staticfiles"] = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
+
 # Own cookie names so this admin doesn't clash with other Django projects on 127.0.0.1
 # (browsers share cookies across ports on the same host).
 SESSION_COOKIE_NAME = "hx_sessionid"
@@ -166,7 +174,7 @@ JAZZMIN_SETTINGS = {
     "site_icon": "hx/logo.svg",
     "welcome_sign": "Sign in to manage the store",
     "copyright": "Hair Xcellence",
-    "search_model": ["orders.Order", "catalog.Product"],
+    "search_model": ["orders.Order", "orders.Customer", "catalog.Product"],
     "user_avatar": None,
     "topmenu_links": [
         {"name": "Dashboard", "url": "admin:index", "permissions": ["auth.view_user"]},
@@ -178,13 +186,17 @@ JAZZMIN_SETTINGS = {
     ],
     "show_sidebar": True,
     "navigation_expanded": True,
-    "order_with_respect_to": ["orders", "orders.Order", "catalog", "catalog.Product", "catalog.Category", "auth"],
+    "order_with_respect_to": ["orders", "orders.Order", "orders.Payment", "orders.Customer", "catalog", "catalog.Product", "catalog.Category", "auth"],
     "icons": {
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
         "auth.Group": "fas fa-users",
         "orders": "fas fa-receipt",
         "orders.Order": "fas fa-shopping-bag",
+        "orders.Payment": "fas fa-money-bill-wave",
+        "orders.Customer": "fas fa-user-friends",
+        "authtoken": "fas fa-key",
+        "authtoken.TokenProxy": "fas fa-key",
         "catalog": "fas fa-store",
         "catalog.Product": "fas fa-gem",
         "catalog.Category": "fas fa-tags",

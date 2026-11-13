@@ -6,7 +6,7 @@ from rest_framework import serializers
 from catalog.models import Product
 from catalog.pricing import DELIVERY, PricingError, unit_price
 
-from .models import Order, OrderItem
+from .models import Customer, Order, OrderItem
 
 PAYMENT_METHODS = ["MTN Mobile Money", "Telecel Cash", "AT Money", "Debit / Credit Card"]
 MAX_QTY = 20
@@ -62,9 +62,15 @@ class OrderCreateSerializer(serializers.Serializer):
 
     @transaction.atomic
     def create(self, data):
+        user = data.pop("user", None)
         fee = Decimal(DELIVERY[data["delivery_method"]]["fee"])
         subtotal = sum((price * item["quantity"] for _, item, price in data["priced"]), Decimal("0"))
+        customer = Customer.from_order_details(
+            name=data["name"], email=data["email"], phone=data["phone"], city=data["city"], region=data["region"],
+        )
         order = Order.objects.create(
+            customer=customer,
+            user=user,
             name=data["name"], email=data["email"], phone=data["phone"],
             address=data["address"], city=data["city"], region=data["region"],
             delivery_method=data["delivery_method"], delivery_fee=fee,
@@ -84,10 +90,22 @@ class OrderCreateSerializer(serializers.Serializer):
 
 class OrderItemOutSerializer(serializers.ModelSerializer):
     unit_price = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=False)
+    product = serializers.SlugRelatedField(read_only=True, slug_field="slug")
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
-        fields = ["product_name", "options", "addons", "unit_price", "quantity"]
+        fields = ["product", "product_name", "image", "options", "addons", "unit_price", "quantity"]
+
+    def get_image(self, obj) -> str:
+        first = obj.product.images.first() if obj.product else None
+        if not first:
+            return ""
+        src = first.src
+        request = self.context.get("request")
+        if src.startswith("/") and not src.startswith("/images/") and request:
+            return request.build_absolute_uri(src)
+        return src
 
 
 class OrderOutSerializer(serializers.ModelSerializer):
