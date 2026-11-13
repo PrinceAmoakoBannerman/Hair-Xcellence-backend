@@ -5,6 +5,7 @@ All secrets and environment-specific values come from environment variables
 (or a local `.env` file in development). See `.env.example`.
 """
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
@@ -62,6 +63,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.http.ConditionalGetMiddleware",  # ETags: unchanged API responses return 304
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -137,11 +139,43 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 import sys  # noqa: E402
 if "test" in sys.argv:
     STORAGES["staticfiles"] = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
+    PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]  # fast, tests only
 
+# ── Cache ─────────────────────────────────────────────────────────────
+# Shared by all server processes in production (rate limits, sign-in lockout, product API).
+# The table is created by `python manage.py createcachetable` (run in build.sh).
+if DEBUG or "test" in sys.argv:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+else:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.db.DatabaseCache", "LOCATION": "hx_cache",
+                          "OPTIONS": {"MAX_ENTRIES": 5000}}}
+
+# ── Visitor IP (rate limits, lockout) ──────────────────────────────────
+# Render sits behind Cloudflare, which sets True-Client-IP; X-Forwarded-For can be faked there.
+# Locally the direct connection address is used.
+CLIENT_IP_HEADERS = (
+    ["HTTP_TRUE_CLIENT_IP", "HTTP_CF_CONNECTING_IP"]
+    if env_bool("TRUST_CLOUDFLARE_IP_HEADERS", bool(os.environ.get("RENDER")))
+    else []
+)
+
+# ── Sessions & cookies ─────────────────────────────────────────────────
 # Own cookie names so this admin doesn't clash with other Django projects on 127.0.0.1
 # (browsers share cookies across ports on the same host).
 SESSION_COOKIE_NAME = "hx_sessionid"
 CSRF_COOKIE_NAME = "hx_csrftoken"
+SESSION_COOKIE_AGE = 60 * 60 * 12          # admin sign-in lasts 12 hours
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+CUSTOMER_TOKEN_TTL = timedelta(days=30)    # customers sign in again after 30 days
+
+# Admin address. Set DJANGO_ADMIN_URL in production to something hard to guess, e.g. "hx-studio-7f3k/".
+ADMIN_URL = os.environ.get("DJANGO_ADMIN_URL", "admin/").strip("/") + "/"
+
+# Upload limits: photos up to 10 MB each; other request bodies up to 2.5 MB.
+MAX_PHOTO_MB = 10
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2_621_440
 
 # CORS / CSRF: the Vercel frontend and local dev server may call the API.
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
@@ -152,8 +186,10 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
-    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
-    "DEFAULT_THROTTLE_RATES": {"anon": "120/min"},
+    # Every endpoint: 120 requests a minute per visitor. Sign-in, orders and payments have
+    # their own, stricter limits (config/security.py).
+    "DEFAULT_THROTTLE_CLASSES": ["config.security.IPThrottle"],
+    "DEFAULT_THROTTLE_RATES": {"ip": "120/min"},
 }
 
 # Production hardening (only when DEBUG is off).
@@ -162,8 +198,28 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT", True)
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
+    SECURE_HSTS_SECONDS = 60 * 60 * 24 * 365
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False  # onrender.com subdomains belong to other people
+    # …so HSTS for subdomains and the browser preload list are deliberately off.
+    SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+    SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
+    X_FRAME_OPTIONS = "DENY"
+
+# ── Logging ────────────────────────────────────────────────────────────
+# Errors (with tracebacks) go to the console, which Render shows under Logs.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {"plain": {"format": "%(asctime)s %(levelname)s %(name)s: %(message)s"}},
+    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "plain"}},
+    "root": {"handlers": ["console"], "level": "INFO" if not DEBUG else "WARNING"},
+    "loggers": {
+        "django.request": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+        "django.security": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+    },
+}
 
 
 # ── Admin theme (Jazzmin) ─────────────────────────────────────────────

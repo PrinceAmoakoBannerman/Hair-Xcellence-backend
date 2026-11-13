@@ -12,7 +12,8 @@ services:
     runtime: python
     plan: free
     buildCommand: ./build.sh
-    startCommand: gunicorn config.wsgi:application
+    # 2 workers fit the free plan's memory; workers restart now and then to keep memory steady.
+    startCommand: gunicorn config.wsgi:application --workers 2 --threads 2 --timeout 60 --max-requests 1000 --max-requests-jitter 100 --access-logfile -
     healthCheckPath: /api/health/
     envVars:
       - key: PYTHON_VERSION
@@ -33,6 +34,9 @@ services:
       - key: CLOUDINARY_API_KEY
         sync: false
       - key: CLOUDINARY_API_SECRET
+        sync: false
+      # Secret admin address, e.g. hx-studio-7f3k/ (the admin is then at https://<backend>/hx-studio-7f3k/)
+      - key: DJANGO_ADMIN_URL
         sync: false
       - key: STORE_URL
         value: https://hair-xcellence.vercel.app

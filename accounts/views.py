@@ -1,24 +1,20 @@
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
+
+from config.security import LOCKED_MESSAGE, AuthThrottle, client_ip, customer_guard
 
 from orders.models import Order
 from orders.serializers import OrderOutSerializer
 
+from .authentication import ExpiringTokenAuthentication, fresh_token
 from .serializers import AccountSerializer, LoginSerializer, RegisterSerializer
 
 
-class AuthThrottle(AnonRateThrottle):
-    rate = "10/min"
-
-
 def _session(user):
-    token, _ = Token.objects.get_or_create(user=user)
-    return {"token": token.key, "account": AccountSerializer(user).data}
+    return {"token": fresh_token(user).key, "account": AccountSerializer(user).data}
 
 
 class Register(APIView):
@@ -38,13 +34,19 @@ class Login(APIView):
     throttle_classes = [AuthThrottle]
 
     def post(self, request):
+        email, ip = str(request.data.get("email", ""))[:254], client_ip(request)
+        if customer_guard.is_blocked(email, ip):
+            return Response({"detail": LOCKED_MESSAGE}, status=status.HTTP_429_TOO_MANY_REQUESTS)
         s = LoginSerializer(data=request.data)
-        s.is_valid(raise_exception=True)
+        if not s.is_valid():
+            customer_guard.failed(email, ip)
+            return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+        customer_guard.succeeded(email, ip)
         return Response(_session(s.validated_data["user"]))
 
 
 class SignedIn(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [ExpiringTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
 

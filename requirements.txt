@@ -1,12 +1,13 @@
-Django>=5.2,<5.3
-django-jazzmin>=3.0
-djangorestframework>=3.15
-django-cors-headers>=4.4
-gunicorn>=23
-whitenoise>=6.7
-dj-database-url>=2.2
-psycopg[binary]>=3.2
-python-dotenv>=1.0
-Pillow>=11
-cloudinary>=1.40
-django-cloudinary-storage>=0.3
+# Exact versions, so every deploy installs what was tested. Upgrade deliberately, then run the tests.
+Django==5.2.19
+django-jazzmin==3.0.5
+djangorestframework==3.18.3
+django-cors-headers==4.9.0
+gunicorn==27.0.1
+whitenoise==6.12.0
+dj-database-url==3.1.2
+psycopg[binary]==3.3.9
+python-dotenv==1.2.4
+Pillow==13.0.0
+cloudinary==1.47.0
+django-cloudinary-storage==0.3.0

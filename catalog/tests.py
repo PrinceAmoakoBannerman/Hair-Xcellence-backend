@@ -36,7 +36,7 @@ class AdminPhotoUploadTests(TestCase):
             slug="test-wig", name="Test Wig", base_price=1000, short="Short", description="Long", detail="HD Lace",
         )
 
-    def _post(self, photos, existing=()):
+    def _post(self, photos, existing=(), **extra):
         data = {
             "name": self.product.name, "slug": self.product.slug, "kind": "wig", "categories": [self.cat.pk],
             "texture": "Straight", "detail": "HD Lace", "base_price": "1000", "sale": "0", "availability": "In stock",
@@ -49,7 +49,9 @@ class AdminPhotoUploadTests(TestCase):
         for i, img in enumerate(existing):
             data.update({f"images-{i}-id": img.pk, f"images-{i}-product": self.product.pk,
                          f"images-{i}-url": img.url, f"images-{i}-alt": img.alt, f"images-{i}-sort_order": img.sort_order})
-        return self.client.post(f"/admin/catalog/product/{self.product.pk}/change/", data, follow=True)
+        data.update(extra)
+        with self.captureOnCommitCallbacks(execute=True):  # run the file clean-up that happens after saving
+            return self.client.post(f"/admin/catalog/product/{self.product.pk}/change/", data, follow=True)
 
     def test_upload_several_photos_at_once(self):
         res = self._post([photo("a.png"), photo("b.png"), photo("c.png")])
@@ -76,3 +78,34 @@ class AdminPhotoUploadTests(TestCase):
         res = self._post([])
         self.assertEqual(res.status_code, 200)
         self.assertEqual(self.product.images.count(), 0)
+
+    def test_photos_tab_shows_cards(self):
+        ProductImage.objects.create(product=self.product, image=photo("main.png"), sort_order=0)
+        res = self.client.get(f"/admin/catalog/product/{self.product.pk}/change/")
+        self.assertContains(res, "Main photo")
+        self.assertContains(res, "Add photos")
+        self.assertContains(res, 'name="images-0-DELETE"')
+
+    def test_remove_photo_deletes_row_and_file(self):
+        img = ProductImage.objects.create(product=self.product, image=photo("gone.png"), sort_order=0)
+        name, storage = img.image.name, img.image.storage
+        self.assertTrue(storage.exists(name))
+        self._post([], existing=[img], **{"images-0-DELETE": "on"})
+        self.assertFalse(ProductImage.objects.filter(pk=img.pk).exists())
+        self.assertFalse(storage.exists(name))
+
+    def test_replace_photo_swaps_file(self):
+        img = ProductImage.objects.create(product=self.product, image=photo("old.png"), sort_order=0)
+        old, storage = img.image.name, img.image.storage
+        self._post([], existing=[img], **{"images-0-image": photo("new.png")})
+        img.refresh_from_db()
+        self.assertNotEqual(img.image.name, old)
+        self.assertTrue(storage.exists(img.image.name))
+        self.assertFalse(storage.exists(old))
+
+    def test_remove_some_and_add_others_in_one_save(self):
+        a = ProductImage.objects.create(product=self.product, image=photo("a.png"), sort_order=0)
+        b = ProductImage.objects.create(product=self.product, image=photo("b.png"), sort_order=1)
+        self._post([photo("c.png")], existing=[a, b], **{"images-0-DELETE": "on"})
+        self.assertEqual(self.product.images.count(), 2)
+        self.assertFalse(ProductImage.objects.filter(pk=a.pk).exists())

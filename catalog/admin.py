@@ -4,7 +4,7 @@ from django.contrib import admin, messages
 from django.db.models import Max
 from django.utils.html import format_html
 
-from .models import Category, Product, ProductImage
+from .models import Category, Product, ProductImage, validate_photo_size
 
 
 def image_src(src: str) -> str:
@@ -22,16 +22,23 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 class ProductImageInline(admin.TabularInline):
-    model = ProductImage
-    extra = 1
-    fields = ("preview", "image", "url", "alt", "sort_order")
-    readonly_fields = ("preview",)
+    """Photos shown as cards (templates/admin/catalog/product/photos_inline.html)."""
 
-    @admin.display(description="Preview")
-    def preview(self, obj):
-        if not obj.src:
-            return "—"
-        return format_html('<img src="{}" style="height:72px;width:58px;object-fit:cover;border-radius:4px" alt="">', image_src(obj.src))
+    model = ProductImage
+    template = "admin/catalog/product/photos_inline.html"
+    verbose_name_plural = "Photos"
+    extra = 0  # new photos come in through "Add photos" (several at once)
+    fields = ("image", "url", "alt", "sort_order")
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name == "image":
+            # Plain file picker: "Replace" swaps the photo, "Remove" deletes the whole card.
+            kwargs["widget"] = forms.FileInput(attrs={"accept": "image/*"})
+        if db_field.name == "url":
+            kwargs["widget"] = forms.TextInput(attrs={"placeholder": "https://…"})
+        if db_field.name == "alt":
+            kwargs["widget"] = forms.TextInput(attrs={"placeholder": "e.g. Front view"})
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -47,7 +54,10 @@ class MultipleImageField(forms.ImageField):
 
     def clean(self, data, initial=None):
         files = data if isinstance(data, (list, tuple)) else ([data] if data else [])
-        return [super(MultipleImageField, self).clean(f, initial) for f in files]
+        cleaned = [super(MultipleImageField, self).clean(f, initial) for f in files]
+        for f in cleaned:
+            validate_photo_size(f)
+        return cleaned
 
 
 class ProductForm(forms.ModelForm):
@@ -65,6 +75,8 @@ class ProductForm(forms.ModelForm):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     form = ProductForm
+    # Tabs: the photos (with "Add photos") sit right after price, in one place.
+    jazzmin_section_order = ("General", "Price & stock", "Photos", "Display")
     list_display = ("thumb", "name", "kind", "base_price", "sale", "availability", "is_bestseller", "is_new", "is_active")
     list_display_links = ("thumb", "name")
     list_filter = ("kind", "availability", "is_active", "is_bestseller", "is_new", "categories")
@@ -73,9 +85,8 @@ class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("name",)}
     inlines = [ProductImageInline]
     fieldsets = (
-        (None, {"fields": ("name", "slug", "kind", "categories", "texture", "detail")}),
+        ("General", {"fields": ("name", "slug", "kind", "categories", "texture", "detail")}),
         ("Price & stock", {"fields": ("base_price", "sale", "availability", "default_colour")}),
-        ("Photos", {"fields": ("photos",)}),
         ("Display", {"fields": ("tag", "short", "description", "is_new", "is_bestseller", "is_active", "sort_order", "popularity")}),
     )
 

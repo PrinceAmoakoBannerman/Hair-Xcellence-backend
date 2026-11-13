@@ -1,0 +1,55 @@
+{% load static hx_admin %}
+{# Product photos as cards: add several at once, replace, reorder or remove each one. #}
+<div class="hx-photos" id="{{ inline_admin_formset.formset.prefix }}-group">
+  {{ inline_admin_formset.formset.management_form }}
+  {{ inline_admin_formset.formset.non_form_errors }}
+
+  <label class="hx-photos-add">
+    <input type="file" name="photos" accept="image/*" multiple data-hx-add>
+    <span class="hx-photos-add-icon" aria-hidden="true">+</span>
+    <span class="hx-photos-add-text">
+      <strong>Add photos</strong>
+      <small>Choose one or several at once (hold Ctrl). JPG, PNG or WebP, up to 10 MB each.</small>
+    </span>
+  </label>
+  <div class="hx-photos-pending" data-hx-pending hidden></div>
+  {% if adminform.form.photos.errors %}<div class="hx-photos-error">{{ adminform.form.photos.errors }}</div>{% endif %}
+
+  {% if inline_admin_formset.formset.forms %}
+    <p class="hx-photos-help">The first photo is the main one on the website. Change the <b>Position</b> numbers to reorder (lowest first). Changes apply when you click <b>Save</b>.</p>
+    <ul class="hx-photo-grid">
+      {% for inline_admin_form in inline_admin_formset %}{% with f=inline_admin_form.form %}{% if "__prefix__" not in f.prefix %}
+        <li class="hx-photo{% if f.errors %} has-error{% endif %}">
+          {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+          <div class="hx-photo-img">
+            {% with src=inline_admin_form.original|photo_src %}
+              {% if src %}<img src="{{ src }}" alt="" data-hx-preview>{% else %}<span class="hx-photo-none" data-hx-preview>No image</span>{% endif %}
+            {% endwith %}
+            {% if forloop.first %}<span class="hx-photo-main">Main photo</span>{% endif %}
+            <span class="hx-photo-gone">Will be removed when you save</span>
+          </div>
+          {% if f.errors %}<div class="hx-photos-error">{% for field in f %}{{ field.errors }}{% endfor %}{{ f.non_field_errors }}</div>{% endif %}
+          <div class="hx-photo-actions">
+            <label class="hx-btn hx-photo-replace" title="Upload a different photo in this place">
+              {{ f.image }}<span>Replace</span>
+            </label>
+            {% if inline_admin_formset.formset.can_delete %}
+              <label class="hx-btn hx-photo-remove">{{ f.DELETE }}<span class="on">Remove</span><span class="off">Undo remove</span></label>
+            {% endif %}
+          </div>
+          <div class="hx-photo-fields">
+            <label><span>Position</span>{{ f.sort_order }}</label>
+            <label class="wide"><span>Description</span>{{ f.alt }}</label>
+          </div>
+          <details class="hx-photo-link"{% if f.url.value %} open{% endif %}>
+            <summary>Image link instead of a file</summary>
+            {{ f.url }}
+          </details>
+        </li>
+      {% endif %}{% endwith %}{% endfor %}
+    </ul>
+  {% else %}
+    <p class="hx-photos-help">No photos yet. Add some above, then click <b>Save</b>.</p>
+  {% endif %}
+  <script src="{% static 'hx/photos.js' %}"></script>
+</div>

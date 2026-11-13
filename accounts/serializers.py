@@ -77,7 +77,8 @@ class LoginSerializer(serializers.Serializer):
 
     def validate(self, data):
         user = authenticate(username=data["email"].strip().lower(), password=data["password"])
-        if not user or not user.is_active:
+        # Staff accounts sign in to the admin only, never through the shop.
+        if not user or not user.is_active or user.is_staff:
             raise serializers.ValidationError("Email or password is incorrect.")
         data["user"] = user
         return data

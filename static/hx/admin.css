@@ -231,3 +231,45 @@ input[type=checkbox], input[type=radio] { accent-color: var(--hx-burgundy); }
   .hx-item-totals > div { gap: 12px; }
   .hx-item-totals dd { white-space: nowrap; }
 }
+
+/* Product photos: one card per photo (replace, remove, reorder) + add several at once */
+.hx-photos { display: flex; flex-direction: column; gap: 14px; }
+.hx-photos-add { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border: 1.5px dashed #c9b28e; border-radius: 10px; background: #fffcf7; cursor: pointer; margin: 0; transition: background .15s, border-color .15s; }
+.hx-photos-add:hover { background: #fff; border-color: var(--hx-burgundy); }
+.hx-photos-add input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.hx-photos-add:focus-within { outline: 2px solid var(--hx-burgundy); outline-offset: 2px; }
+.hx-photos-add-icon { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--hx-burgundy); color: #fff; display: grid; place-items: center; font-size: 24px; line-height: 1; }
+.hx-photos-add-text { display: flex; flex-direction: column; gap: 2px; }
+.hx-photos-add-text strong { font-size: 15px; }
+.hx-photos-add-text small { color: #8a7a70; font-size: 13px; }
+.hx-photos-pending { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.hx-photos-pending p { flex-basis: 100%; margin: 0; font-size: 13px; color: var(--hx-burgundy); font-weight: 500; }
+.hx-photos-pending img { width: 64px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #e4d6c3; }
+.hx-photos-help { margin: 0; font-size: 13px; color: #8a7a70; }
+.hx-photos-error { color: #b42318; font-size: 13px; }
+.hx-photos-error ul { margin: 0; padding-left: 18px; }
+.hx-photo-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+.hx-photo { display: flex; flex-direction: column; gap: 10px; padding: 10px; border: 1px solid #e4d6c3; border-radius: 10px; background: #fff; transition: opacity .15s; }
+.hx-photo.has-error { border-color: #b42318; }
+.hx-photo.is-replaced { border-color: var(--hx-gold); }
+.hx-photo-img { position: relative; aspect-ratio: 4 / 5; border-radius: 7px; overflow: hidden; background: #f6ede2; }
+.hx-photo-img img, .hx-photo-none { width: 100%; height: 100%; object-fit: cover; display: grid; place-items: center; color: #8a7a70; font-size: 13px; }
+.hx-photo-main { position: absolute; left: 8px; top: 8px; padding: 2px 9px; border-radius: 99px; background: var(--hx-burgundy); color: #fff; font-size: 11px; font-weight: 600; }
+.hx-photo-gone { display: none; position: absolute; inset: 0; place-items: center; text-align: center; padding: 12px; background: rgba(48, 35, 31, .62); color: #fff; font-size: 13px; font-weight: 600; }
+.hx-photo-actions { display: flex; gap: 6px; }
+.hx-photo-actions .hx-btn { flex: 1; text-align: center; cursor: pointer; margin: 0; padding: 6px 8px; }
+.hx-photo-actions input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.hx-photo-actions .hx-btn:focus-within { outline: 2px solid var(--hx-burgundy); outline-offset: 1px; }
+.hx-photo-remove { color: #b42318 !important; border-color: #f0c7c2 !important; }
+.hx-photo-remove .off { display: none; }
+.hx-photo:has(.hx-photo-remove input:checked) .hx-photo-gone { display: grid; }
+.hx-photo:has(.hx-photo-remove input:checked) .hx-photo-remove .on { display: none; }
+.hx-photo:has(.hx-photo-remove input:checked) .hx-photo-remove .off { display: inline; }
+.hx-photo:has(.hx-photo-remove input:checked) .hx-photo-fields,
+.hx-photo:has(.hx-photo-remove input:checked) .hx-photo-replace,
+.hx-photo:has(.hx-photo-remove input:checked) .hx-photo-link { opacity: .4; pointer-events: none; }
+.hx-photo-fields { display: grid; grid-template-columns: 74px 1fr; gap: 8px; }
+.hx-photo-fields label { display: flex; flex-direction: column; gap: 3px; margin: 0; font-size: 12px; color: #8a7a70; font-weight: 400; }
+.hx-photo-fields input { width: 100%; padding: 4px 8px; border: 1px solid #e4d6c3; border-radius: 6px; font-size: 13px; color: var(--hx-ink); background: #fff; }
+.hx-photo-link summary { font-size: 12px; color: #8a7a70; cursor: pointer; }
+.hx-photo-link input { width: 100%; margin-top: 6px; padding: 4px 8px; border: 1px solid #e4d6c3; border-radius: 6px; font-size: 12px; }

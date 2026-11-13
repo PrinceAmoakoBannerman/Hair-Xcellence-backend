@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -68,9 +70,16 @@ class Product(models.Model):
         return self.name
 
 
+def validate_photo_size(file):
+    """Keep uploads reasonable (phone photos are 2–6 MB)."""
+    limit = settings.MAX_PHOTO_MB * 1024 * 1024
+    if file and getattr(file, "size", 0) > limit:
+        raise ValidationError(f"This photo is larger than {settings.MAX_PHOTO_MB} MB. Please use a smaller one.")
+
+
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name="images", on_delete=models.CASCADE)
-    image = models.ImageField(upload_to="products/", blank=True, help_text="Upload a photo (recommended).")
+    image = models.ImageField(upload_to="products/", blank=True, validators=[validate_photo_size], help_text="Upload a photo (recommended, up to 10 MB).")
     url = models.CharField(
         max_length=500, blank=True,
         help_text="…or paste an image link instead of uploading.",

@@ -59,11 +59,29 @@ All settings come from environment variables (see `.env.example`). Nothing secre
 | `CSRF_TRUSTED_ORIGINS` | Backend URL (needed for the admin behind HTTPS) |
 | `STORE_URL` | Website URL (used for the admin's "View store" link) |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Store photos uploaded in the admin (Render's disk is wiped on every deploy). `CLOUDINARY_URL` also works |
+| `DJANGO_ADMIN_URL` | Admin address. `admin/` locally; something hard to guess in production, e.g. `hx-studio-7f3k/` |
 | `PAYSTACK_SECRET_KEY` | Online MoMo / card payments. `sk_test_…` for testing, `sk_live_…` in production. Empty = online payment off |
+
+## Security
+
+- **Rate limits** (per visitor IP): 120 API requests a minute overall; sign-in and sign-up 10 a minute; orders 20 an hour; payments 60 an hour. Each has its own allowance, so browsing never uses up the order limit. On Render the IP comes from Cloudflare's `True-Client-IP` header (`X-Forwarded-For` can be faked there).
+- **Sign-in lockout:** 5 wrong passwords for an account from one IP (or 20 from one IP in total) blocks further attempts for 15 minutes. Applies to the admin and to customer accounts. Staff accounts can only sign in to the admin, never through the shop.
+- **Sessions:** admin sign-in lasts 12 hours; customer sign-in 30 days, then they sign in again. Cookies are `Secure`, `HttpOnly` (session) and `SameSite=Lax`.
+- **HTTPS:** redirect to HTTPS, HSTS for a year, `X-Frame-Options: DENY`, no MIME sniffing, strict referrer policy.
+- **Admin address:** set `DJANGO_ADMIN_URL`; the backend's home page redirects to the shop and doesn't reveal it.
+- **Uploads:** photos up to 10 MB each, checked to be real images.
+- **Payments:** amounts are recalculated on the server; Paystack webhooks are signature-checked and re-verified.
+- `build.sh` runs `manage.py check --deploy` and stops the deploy if a security setting is missing.
+
+## Caching
+
+- The product API is cached for 10 minutes and cleared the moment a product, photo or category changes in the admin.
+- Responses carry an ETag; browsers re-check each time and get a quick `304 Not Modified` when nothing changed.
+- The cache lives in the database (`createcachetable`, run by `build.sh`), so all server processes share it.
 
 ## Deploy on Render
 
 New + → Blueprint → choose this repository. `render.yaml` creates the web service and a Postgres database. After the first deploy:
 
-1. Set `CORS_ALLOWED_ORIGINS` and `STORE_URL` to the Vercel URL, `CSRF_TRUSTED_ORIGINS` to the Render URL, and add the Cloudinary and Paystack keys when Render asks.
+1. Set `CORS_ALLOWED_ORIGINS` and `STORE_URL` to the Vercel URL, `CSRF_TRUSTED_ORIGINS` to the Render URL, choose a `DJANGO_ADMIN_URL`, and add the Cloudinary and Paystack keys when Render asks.
 2. Open the service's **Shell** and run `python manage.py createsuperuser` and `python manage.py seed_products`.

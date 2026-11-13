@@ -8,10 +8,10 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import serializers, status
 from rest_framework.response import Response
-from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
 from orders.models import Order
+from config.security import PaymentThrottle
 from orders.serializers import OrderOutSerializer
 
 from . import paystack
@@ -19,10 +19,6 @@ from .services import apply_transaction
 
 log = logging.getLogger(__name__)
 NOT_SET_UP = "Online payment isn't set up yet. We'll send you payment details on WhatsApp."
-
-
-class PaymentThrottle(AnonRateThrottle):
-    rate = "30/hour"
 
 
 class PaymentConfig(APIView):

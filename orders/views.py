@@ -1,21 +1,18 @@
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
-from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
+from accounts.authentication import ExpiringTokenAuthentication
+from config.security import OrderThrottle
+
 from .serializers import OrderCreateSerializer, OrderOutSerializer
-
-
-class OrderCreateThrottle(AnonRateThrottle):
-    rate = "20/hour"
 
 
 class OrderCreate(APIView):
     """POST /api/orders/ — place an order. Prices are recalculated on the server."""
 
-    throttle_classes = [OrderCreateThrottle]
-    authentication_classes = [TokenAuthentication]  # optional: guests can order too
+    throttle_classes = [OrderThrottle]
+    authentication_classes = [ExpiringTokenAuthentication]  # optional: guests can order too
 
     def post(self, request):
         serializer = OrderCreateSerializer(data=request.data)
