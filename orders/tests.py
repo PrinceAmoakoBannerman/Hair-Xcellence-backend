@@ -139,3 +139,11 @@ class AdminFeatureTests(TestCase):
         self.assertIn("Store overview", dash)
         self.assertIn(rushed.number, dash)  # appears in recent + rush lists
         self.assertIn("Awaiting payment", self.client.get("/admin/orders/payment/").content.decode())
+
+    def test_autofilled_city_is_tidied(self):
+        body = {**CUSTOMER, "city": "Accra, Greater Accra Region, Ghana", "items": [
+            {"product": WIG, "options": DEFAULT_WIG_OPTIONS, "quantity": 1},
+        ]}
+        res = self.api.post("/api/orders/", body, format="json")
+        self.assertEqual(res.status_code, 201, res.content)
+        self.assertEqual(res.json()["city"], "Accra")

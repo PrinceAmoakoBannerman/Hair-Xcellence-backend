@@ -184,3 +184,16 @@ input[type=checkbox], input[type=radio] { accent-color: var(--hx-burgundy); }
 #result_list .field-created_at { white-space: nowrap; font-size: 13px; }
 #result_list .field-status select { min-width: 128px; }
 #result_list .field-contact { white-space: nowrap; }
+
+/* Deliver to: one compact line, full address on hover */
+#result_list .field-deliver_to { white-space: nowrap; }
+.hx-dest { display: block; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: help; }
+.hx-dest + small { display: block; }
+#result_list .field-customer_name { white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+
+/* Deliver to: address first (up to 2 lines), then city · region · method */
+#result_list .field-deliver_to { white-space: normal; min-width: 210px; max-width: 260px; }
+.hx-addr { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600; line-height: 1.35; cursor: help; }
+.hx-place { display: block; margin-top: 3px; line-height: 1.35; }
+#result_list .field-deliver_to { max-width: 290px; }
+.hx-place { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

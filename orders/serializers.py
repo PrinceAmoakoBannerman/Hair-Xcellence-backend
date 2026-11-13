@@ -31,6 +31,10 @@ class OrderCreateSerializer(serializers.Serializer):
     payment_method = serializers.ChoiceField(choices=PAYMENT_METHODS)
     items = OrderItemInSerializer(many=True)
 
+    def validate_city(self, value):
+        """Browser autofill sometimes puts 'Accra, Greater Accra Region, Ghana' in the city box; keep the city."""
+        return next((part.strip() for part in value.split(",") if part.strip()), value.strip())
+
     def validate_items(self, items):
         if not items:
             raise serializers.ValidationError("Your order has no items.")

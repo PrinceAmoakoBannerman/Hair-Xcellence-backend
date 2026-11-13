@@ -14,6 +14,11 @@ def ghs(amount) -> str:
     return f"GH₵ {amount:,.0f}" if amount == int(amount) else f"GH₵ {amount:,.2f}"
 
 
+def short_city(city: str) -> str:
+    """'Accra, Greater Accra Region, Ghana' (browser autofill) -> 'Accra'."""
+    return next((part.strip() for part in city.split(",") if part.strip()), city)
+
+
 def pill(value: str, label: str):
     return format_html('<span class="hx-pill {}">{}</span>', value, label)
 
@@ -148,7 +153,13 @@ class OrderAdmin(admin.ModelAdmin):
 
     @admin.display(description="Deliver to", ordering="region")
     def deliver_to(self, obj):
-        return format_html("<b>{}</b>, {}<br><small class='hx-muted'>{}</small>", obj.city, obj.region, obj.delivery_method)
+        city = short_city(obj.city)
+        place = city if not obj.region or obj.region.lower() in city.lower() else f"{city} · {obj.region}"
+        full = f"{obj.address}, {obj.city}, {obj.region}"
+        return format_html(
+            '<span class="hx-addr" title="{}">{}</span><small class="hx-muted hx-place">{} · {}</small>',
+            full, obj.address, place, obj.delivery_method,
+        )
 
     @admin.display(description="Delivery")
     def delivery_box(self, obj):
