@@ -1,6 +1,7 @@
 from django.conf import settings
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.db.models import Max
 from django.utils.html import format_html
 
 from .models import Category, Product, ProductImage
@@ -33,8 +34,37 @@ class ProductImageInline(admin.TabularInline):
         return format_html('<img src="{}" style="height:72px;width:58px;object-fit:cover;border-radius:4px" alt="">', image_src(obj.src))
 
 
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleImageField(forms.ImageField):
+    """Pick several photos at once; each one is checked as an image."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", MultipleFileInput(attrs={"accept": "image/*"}))
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        files = data if isinstance(data, (list, tuple)) else ([data] if data else [])
+        return [super(MultipleImageField, self).clean(f, initial) for f in files]
+
+
+class ProductForm(forms.ModelForm):
+    photos = MultipleImageField(
+        required=False, label="Add photos",
+        help_text="Select several photos at once (hold Ctrl, or Cmd on a Mac). They are added in the order chosen, "
+                  "after any photos the product already has. Reorder or delete them under Product images below.",
+    )
+
+    class Meta:
+        model = Product
+        fields = "__all__"
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    form = ProductForm
     list_display = ("thumb", "name", "kind", "base_price", "sale", "availability", "is_bestseller", "is_new", "is_active")
     list_display_links = ("thumb", "name")
     list_filter = ("kind", "availability", "is_active", "is_bestseller", "is_new", "categories")
@@ -45,8 +75,20 @@ class ProductAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {"fields": ("name", "slug", "kind", "categories", "texture", "detail")}),
         ("Price & stock", {"fields": ("base_price", "sale", "availability", "default_colour")}),
+        ("Photos", {"fields": ("photos",)}),
         ("Display", {"fields": ("tag", "short", "description", "is_new", "is_bestseller", "is_active", "sort_order", "popularity")}),
     )
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        files = form.cleaned_data.get("photos") or []
+        if not files:
+            return
+        product = form.instance
+        start = (product.images.aggregate(m=Max("sort_order"))["m"] or 0) + (1 if product.images.exists() else 0)
+        for i, f in enumerate(files):
+            ProductImage.objects.create(product=product, image=f, alt=product.name, sort_order=start + i)
+        messages.success(request, f"Added {len(files)} photo{'s' if len(files) != 1 else ''} to {product.name}.")
 
     @admin.display(description="")
     def thumb(self, obj):

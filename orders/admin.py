@@ -3,7 +3,7 @@ from urllib.parse import quote
 from django.contrib import admin, messages
 from django.db.models import Count, Max, Q, Sum
 from django.urls import reverse
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 
 from catalog.admin import image_src
 
@@ -35,22 +35,41 @@ def contact_buttons(name: str, phone: str, number: str = ""):
 
 # ── Orders ─────────────────────────────────────────────────────────────
 
-class OrderItemInline(admin.TabularInline):
-    model = OrderItem
-    extra = 0
-    fields = ("photo", "product_name", "summary", "unit_price", "quantity", "line_total")
-    readonly_fields = fields
-    can_delete = False
+OPTION_LABELS = {
+    "length": "Length", "texture": "Texture", "laceType": "Lace", "laceSize": "Lace size", "density": "Density",
+    "colour": "Colour", "cap": "Cap size", "production": "Production",
+}
 
-    def has_add_permission(self, request, obj=None):
-        return False
 
-    @admin.display(description="")
-    def photo(self, obj):
-        first = obj.product.images.first() if obj.product else None
-        if not first:
-            return "—"
-        return format_html('<img class="hx-thumb" src="{}" alt="">', image_src(first.src))
+def option_label(key: str) -> str:
+    return OPTION_LABELS.get(key) or key[:1].upper() + key[1:]
+
+
+def items_html(order) -> str:
+    """Order items as clear cards: photo, name, every chosen option on its own line, quantity and price."""
+    cards = []
+    for it in order.items.all():
+        first = it.product.images.first() if it.product else None
+        photo = format_html('<img src="{}" alt="">', image_src(first.src)) if first else format_html('<span class="hx-noimg">No photo</span>')
+        name = (format_html('<a href="{}">{}</a>', reverse("admin:catalog_product_change", args=[it.product_id]), it.product_name)
+                if it.product_id else it.product_name)
+        specs = format_html_join(
+            "", '<div class="{}"><dt>{}</dt><dd>{}</dd></div>',
+            (("hx-rush" if k == "production" and v != "Standard" else "", option_label(k), v) for k, v in it.options.items()),
+        )
+        addons = format_html('<div><dt>Add-ons</dt><dd>{}</dd></div>', ", ".join(it.addons)) if it.addons else ""
+        cards.append(format_html(
+            '<div class="hx-item"><div class="hx-item-photo">{}</div>'
+            '<div class="hx-item-body"><strong class="hx-item-name">{}</strong><dl class="hx-specs">{}{}</dl></div>'
+            '<div class="hx-item-price"><span class="hx-qty">Qty {}</span><span class="hx-muted">{} each</span><strong>{}</strong></div></div>',
+            photo, name, specs, addons, it.quantity, ghs(it.unit_price), ghs(it.line_total),
+        ))
+    totals = format_html(
+        '<dl class="hx-item-totals"><div><dt>Subtotal</dt><dd>{}</dd></div><div><dt>Delivery · {}</dt><dd>{}</dd></div>'
+        '<div class="hx-grand"><dt>Total</dt><dd>{}</dd></div></dl>',
+        ghs(order.subtotal), order.delivery_method, ghs(order.delivery_fee), ghs(order.total),
+    )
+    return format_html('<div class="hx-items">{}{}</div>', format_html_join("", "{}", ((c,) for c in cards)), totals)
 
 
 def _set_status(status: str, label: str):
@@ -116,11 +135,11 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ("number", "name", "email", "phone", "payment_reference", "address", "city")
     date_hierarchy = "created_at"
     list_per_page = 30
-    inlines = [OrderItemInline]
     actions = ORDER_ACTIONS + PAYMENT_ACTIONS
-    readonly_fields = ("number", "delivery_box", "customer_link", "user", "contact", "created_at", "updated_at", "paid_at", "payment_channel", "subtotal", "delivery_fee", "total")
+    readonly_fields = ("number", "items_box", "delivery_box", "customer_link", "user", "contact", "created_at", "updated_at", "paid_at", "payment_channel", "subtotal", "delivery_fee", "total")
     fieldsets = (
         ("Order", {"fields": ("number", "status", "delivery_box", "created_at", "updated_at", "note")}),
+        ("Order items", {"fields": ("items_box",)}),
         ("Customer", {"fields": ("customer_link", "user", "contact", "name", "email", "phone", "address", "city", "region")}),
         ("Delivery & payment", {"fields": ("delivery_method", "delivery_fee", "payment_method", "payment_status", "payment_channel", "payment_reference", "paid_at")}),
         ("Totals", {"fields": ("subtotal", "total")}),
@@ -160,6 +179,10 @@ class OrderAdmin(admin.ModelAdmin):
             '<span class="hx-addr" title="{}">{}</span><small class="hx-muted hx-place">{} · {}</small>',
             full, obj.address, place, obj.delivery_method,
         )
+
+    @admin.display(description="Items")
+    def items_box(self, obj):
+        return items_html(obj) if obj.pk else "—"
 
     @admin.display(description="Delivery")
     def delivery_box(self, obj):
