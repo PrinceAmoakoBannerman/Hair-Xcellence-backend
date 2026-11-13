@@ -5,6 +5,7 @@ All secrets and environment-specific values come from environment variables
 (or a local `.env` file in development). See `.env.example`.
 """
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -92,6 +93,9 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # Database: DATABASE_URL (Neon / local Postgres) or a local SQLite file.
+# In production a missing link is an error: falling back to SQLite would lose every order on redeploy.
+if not DEBUG and not os.environ.get("DATABASE_URL") and "test" not in sys.argv:
+    raise RuntimeError("DATABASE_URL must be set when DJANGO_DEBUG is off (use the Neon connection string).")
 DATABASES = {
     "default": dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
@@ -137,7 +141,6 @@ STORAGES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Tests render admin pages without running collectstatic first.
-import sys  # noqa: E402
 if "test" in sys.argv:
     STORAGES["staticfiles"] = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
     PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]  # fast, tests only
