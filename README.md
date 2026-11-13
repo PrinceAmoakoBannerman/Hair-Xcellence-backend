@@ -54,7 +54,7 @@ All settings come from environment variables (see `.env.example`). Nothing secre
 | `DJANGO_DEBUG` | `True` locally, `False` in production |
 | `DJANGO_SECRET_KEY` | Required in production (Render generates one) |
 | `DJANGO_ALLOWED_HOSTS` | Hostnames the backend answers on |
-| `DATABASE_URL` | Postgres connection (set automatically on Render); SQLite locally |
+| `DATABASE_URL` | Postgres connection (Neon in production, local Postgres or SQLite in development) |
 | `CORS_ALLOWED_ORIGINS` | Website URLs allowed to call the API |
 | `CSRF_TRUSTED_ORIGINS` | Backend URL (needed for the admin behind HTTPS) |
 | `STORE_URL` | Website URL (used for the admin's "View store" link) |
@@ -79,9 +79,11 @@ All settings come from environment variables (see `.env.example`). Nothing secre
 - Responses carry an ETag; browsers re-check each time and get a quick `304 Not Modified` when nothing changed.
 - The cache lives in the database (`createcachetable`, run by `build.sh`), so all server processes share it.
 
-## Deploy on Render
+## Deploy on Render (+ Neon database)
 
-New + → Blueprint → choose this repository. `render.yaml` creates the web service and a Postgres database. After the first deploy:
+The database is a free Neon Postgres (it doesn't expire); the backend runs on Render. Both in Frankfurt.
 
-1. Set `CORS_ALLOWED_ORIGINS` and `STORE_URL` to the Vercel URL, `CSRF_TRUSTED_ORIGINS` to the Render URL, choose a `DJANGO_ADMIN_URL`, and add the Cloudinary and Paystack keys when Render asks.
-2. Open the service's **Shell** and run `python manage.py createsuperuser` and `python manage.py seed_products`.
+1. **Neon** (neon.tech): create a project in region *AWS Europe Central 1 (Frankfurt)*. Copy the connection string (direct, not pooled; it ends with `?sslmode=require`).
+2. **Render**: New + → Blueprint → choose this repository. `render.yaml` creates the web service. When asked, paste `DATABASE_URL` (the Neon link), the Paystack and Cloudinary keys, and a secret `DJANGO_ADMIN_URL`.
+3. Set `CORS_ALLOWED_ORIGINS` and `STORE_URL` to the Vercel URL and `CSRF_TRUSTED_ORIGINS` to the Render URL.
+4. The free plan has no shell: create the admin account and load products by running `manage.py createsuperuser` / `seed_products` locally with `DATABASE_URL` set to the Neon link.

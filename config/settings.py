@@ -91,11 +91,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# Database: DATABASE_URL (Render Postgres) or a local SQLite file.
+# Database: DATABASE_URL (Neon / local Postgres) or a local SQLite file.
 DATABASES = {
     "default": dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
+        conn_health_checks=True,  # Neon's free database sleeps when idle; reconnect cleanly when it wakes
     )
 }
 

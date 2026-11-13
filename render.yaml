@@ -1,15 +1,11 @@
 # Render Blueprint for the Hair Xcellence backend (the website is deployed separately on Vercel).
 # In Render: New + → Blueprint → pick this repository.
-databases:
-  - name: hairxcellence-db
-    plan: free
-    databaseName: hairxcellence
-    user: hairxcellence
-
+# The database is on Neon (free Postgres that doesn't expire): paste its connection link as DATABASE_URL.
 services:
   - type: web
     name: hairxcellence-api
     runtime: python
+    region: frankfurt  # closest Render region to Ghana; create the Neon database in Frankfurt too
     plan: free
     buildCommand: ./build.sh
     # 2 workers fit the free plan's memory; workers restart now and then to keep memory steady.
@@ -22,10 +18,9 @@ services:
         value: "False"
       - key: DJANGO_SECRET_KEY
         generateValue: true
+      # Neon → your project → Connect → connection string (direct, not "pooled"), ends with ?sslmode=require
       - key: DATABASE_URL
-        fromDatabase:
-          name: hairxcellence-db
-          property: connectionString
+        sync: false
       # Secrets: Render asks for these in the dashboard (never stored in git).
       - key: PAYSTACK_SECRET_KEY
         sync: false
