@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from catalog.models import Product
 
-from .models import Customer, Order, OrderItem
+from .models import Customer, Enquiry, Order, OrderItem
 
 LIVE = ~Q(status=Order.Status.CANCELLED)
 RUSHED = Q(items__options__production="Priority") | Q(items__options__production="Express")
@@ -105,6 +105,9 @@ def dashboard_stats() -> dict:
         "customers_repeat": repeat,
         "low_stock": list(Product.objects.filter(is_active=True, availability=Product.Availability.LOW_STOCK).values("id", "name")[:6]),
         "products_live": Product.objects.filter(is_active=True).count(),
+        "enquiries_new": Enquiry.objects.filter(status=Enquiry.Status.NEW).count(),
+        "requests_new": Enquiry.objects.filter(status=Enquiry.Status.NEW, topic=Enquiry.Topic.REQUEST).count(),
+        "sold_out": Product.objects.filter(is_active=True, availability=Product.Availability.SOLD_OUT).count(),
         "products_hidden": Product.objects.filter(is_active=False).count(),
         "products_on_sale": Product.objects.filter(is_active=True, sale__gt=0).count(),
     }

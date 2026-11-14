@@ -6,7 +6,7 @@ from rest_framework import serializers
 from catalog.models import Product
 from catalog.pricing import DELIVERY, PricingError, unit_price
 
-from .models import Customer, Order, OrderItem
+from .models import Customer, Enquiry, Order, OrderItem, normalise_phone
 
 PAYMENT_METHODS = ["MTN Mobile Money", "Telecel Cash", "AT Money", "Debit / Credit Card"]
 MAX_QTY = 20
@@ -55,7 +55,10 @@ class OrderCreateSerializer(serializers.Serializer):
         for n, item in enumerate(data["items"], start=1):
             product = products.get(item["product"])
             if not product:
-                errors.append(f"Item {n}: product not available.")
+                errors.append("An item in your bag is no longer available. Please remove it from your bag and try again.")
+                continue
+            if product.availability == Product.Availability.SOLD_OUT:
+                errors.append(f"{product.name} is sold out. Please remove it from your bag, or request it from our contact page.")
                 continue
             try:
                 price = unit_price(product, item["options"], item["addons"])
@@ -130,3 +133,27 @@ class OrderOutSerializer(serializers.ModelSerializer):
             "delivery_method", "delivery_fee", "payment_method", "payment_status", "subtotal", "total", "items",
             "customer_note",
         ]
+
+
+class EnquirySerializer(serializers.ModelSerializer):
+    # Hidden field that people never see or fill in; spam bots usually do.
+    website = serializers.CharField(required=False, allow_blank=True, write_only=True, max_length=200)
+
+    class Meta:
+        model = Enquiry
+        fields = ["topic", "name", "phone", "email", "message", "product", "needed_by", "website"]
+
+    def validate_phone(self, value):
+        if len(normalise_phone(value)) < 9:
+            raise serializers.ValidationError("Enter a phone or WhatsApp number we can reach you on.")
+        return value.strip()
+
+    def validate_message(self, value):
+        value = value.strip()
+        if len(value) < 5:
+            raise serializers.ValidationError("Tell us a little about what you're looking for.")
+        return value
+
+    def create(self, data):
+        data.pop("website", None)
+        return super().create(data)

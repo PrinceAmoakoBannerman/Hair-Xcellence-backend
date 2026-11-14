@@ -36,6 +36,7 @@ Run the tests with `python manage.py test`.
 | GET | `/api/products/` | Active products. Filters: `?category=Glueless%20Wigs`, `?kind=wig` |
 | GET | `/api/products/<slug>/` | One product |
 | POST | `/api/orders/` | Place an order. Prices are recalculated on the server from the chosen options |
+| POST | `/api/enquiries/` | Contact / wig request form (shows in the admin under Enquiries; 10 an hour per visitor) |
 | GET | `/api/payments/config/` | Whether online payment is switched on |
 | POST | `/api/payments/start/` | Start a Paystack payment for an order (`{order, email}`) |
 | GET | `/api/payments/verify/?reference=` | Confirm a payment with Paystack when the customer returns |

@@ -256,7 +256,7 @@ JAZZMIN_SETTINGS = {
     "hide_apps": ["authtoken"],  # sign-in tokens are internal
     "show_sidebar": True,
     "navigation_expanded": True,
-    "order_with_respect_to": ["orders", "orders.Order", "orders.Payment", "orders.Customer", "catalog", "catalog.Product", "catalog.Category", "auth"],
+    "order_with_respect_to": ["orders", "orders.Order", "orders.Payment", "orders.Customer", "orders.Enquiry", "catalog", "catalog.Product", "catalog.Category", "auth"],
     "icons": {
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
@@ -265,6 +265,7 @@ JAZZMIN_SETTINGS = {
         "orders.Order": "fas fa-shopping-bag",
         "orders.Payment": "fas fa-money-bill-wave",
         "orders.Customer": "fas fa-user-friends",
+        "orders.Enquiry": "fas fa-envelope-open-text",
         "authtoken": "fas fa-key",
         "authtoken.TokenProxy": "fas fa-key",
         "catalog": "fas fa-store",

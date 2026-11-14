@@ -188,3 +188,79 @@ class CustomerNoteTests(TestCase):
         self.assertIn(with_note.number, listing)
         self.assertIn('hx-note-pill" title="Please call before delivery &lt;b&gt;">Note</span>', listing)
         self.assertNotIn(without.number, listing)
+
+
+class EnquiryTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.api = APIClient()
+
+    def _send(self, **extra):
+        body = {"topic": "request", "name": "Ama Mensah", "phone": "024 123 4567",
+                "message": "Do you have a 30 inch ginger kinky curly wig?", **extra}
+        return self.api.post("/api/enquiries/", body, format="json")
+
+    def test_request_is_saved(self):
+        res = self._send(product="Ginger Curly Glueless Wig", needed_by="2026-12-20", email="ama@example.com")
+        self.assertEqual(res.status_code, 201, res.content)
+        from orders.models import Enquiry
+        e = Enquiry.objects.get()
+        self.assertEqual((e.topic, e.status, e.product, str(e.needed_by)), ("request", "new", "Ginger Curly Glueless Wig", "2026-12-20"))
+
+    def test_needs_phone_and_message(self):
+        self.assertEqual(self._send(phone="12").status_code, 400)
+        self.assertEqual(self._send(message="  hi ").status_code, 400)
+
+    def test_spam_bot_is_ignored(self):
+        from orders.models import Enquiry
+        self.assertEqual(self._send(website="http://spam.example").status_code, 201)
+        self.assertFalse(Enquiry.objects.exists())
+
+    def test_rate_limited(self):
+        codes = [self._send().status_code for _ in range(11)]
+        self.assertEqual(codes[-1], 429)
+
+    def test_admin_lists_and_dashboard_flags_new_enquiries(self):
+        from django.contrib.auth import get_user_model
+        self._send(name="Efua <script>")
+        self.client.force_login(get_user_model().objects.create_superuser("boss", "b@example.com", "pw-123456"))
+        listing = self.client.get("/admin/orders/enquiry/").content.decode()
+        self.assertIn("Efua &lt;script&gt;", listing)
+        self.assertIn("https://wa.me/233241234567", listing)
+        self.assertIn("1 new enquiry", self.client.get("/admin/").content.decode())
+
+
+class SoldOutTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_products", verbosity=0)
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.api = APIClient()
+
+    def _order(self):
+        body = {**CUSTOMER, "items": [{"product": WIG, "options": DEFAULT_WIG_OPTIONS, "quantity": 1}]}
+        return self.api.post("/api/orders/", body, format="json")
+
+    def test_sold_out_product_cannot_be_ordered(self):
+        from catalog.models import Product
+        Product.objects.filter(slug=WIG).update(availability="Sold out")
+        res = self._order()
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("HD Lace Body Wave Wig is sold out", str(res.json()))
+
+    def test_removed_product_message_is_clear(self):
+        from catalog.models import Product
+        Product.objects.filter(slug=WIG).update(is_active=False)
+        res = self._order()
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("no longer available", str(res.json()))
+
+    def test_sold_out_still_listed_on_the_site(self):
+        from catalog.models import Product
+        Product.objects.filter(slug=WIG).update(availability="Sold out")
+        listed = {p["id"]: p["availability"] for p in self.api.get("/api/products/").json()}
+        self.assertEqual(listed[WIG], "Sold out")

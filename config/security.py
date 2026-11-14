@@ -47,6 +47,11 @@ class PaymentThrottle(IPThrottle):
     rate = "60/hour"
 
 
+class EnquiryThrottle(IPThrottle):
+    scope = "enquiries"
+    rate = "10/hour"
+
+
 # ── Sign-in lockout ────────────────────────────────────────────────────
 
 LOCKOUT_SECONDS = 15 * 60

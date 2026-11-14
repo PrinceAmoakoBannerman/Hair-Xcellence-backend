@@ -144,3 +144,40 @@ class Payment(Order):
         proxy = True
         verbose_name = "payment"
         verbose_name_plural = "payments"
+
+
+class Enquiry(models.Model):
+    """Messages and wig requests sent from the website's contact / request form."""
+
+    class Topic(models.TextChoices):
+        REQUEST = "request", "Wig request (not on the site)"
+        CHOOSING = "choosing", "Help choosing a wig"
+        CUSTOM = "custom", "Custom wig consultation"
+        ORDER = "order", "Order support"
+        OTHER = "other", "Something else"
+
+    class Status(models.TextChoices):
+        NEW = "new", "New"
+        REPLIED = "replied", "Replied"
+        CLOSED = "closed", "Closed"
+
+    topic = models.CharField(max_length=20, choices=Topic.choices, default=Topic.REQUEST)
+    name = models.CharField(max_length=120)
+    phone = models.CharField("phone / WhatsApp", max_length=30)
+    email = models.EmailField(blank=True)
+    message = models.TextField(max_length=2000)
+    product = models.CharField(
+        max_length=150, blank=True, help_text="The product the customer was looking at, if any (e.g. a sold-out wig).",
+    )
+    needed_by = models.DateField("needed by", null=True, blank=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.NEW)
+    note = models.TextField("internal note", blank=True, help_text="Only visible here, e.g. the price you quoted.")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name_plural = "enquiries"
+
+    def __str__(self) -> str:
+        return f"{self.get_topic_display()} from {self.name}"

@@ -279,3 +279,13 @@ input[type=checkbox], input[type=radio] { accent-color: var(--hx-burgundy); }
 .hx-cnote p { margin: 4px 0 0; font-size: 15px; line-height: 1.5; color: var(--hx-ink); white-space: pre-line; }
 .field-customer_note_box .readonly { padding: 0; background: none; border: 0; }
 .hx-note-pill { background: #fff1d6; color: #8a5a00; cursor: help; }
+
+/* Enquiries */
+.field-message_box .readonly { padding: 0; background: none; border: 0; }
+#result_list .field-status select { min-width: 110px; }
+#result_list .field-reply { white-space: nowrap; }
+#result_list .field-preview { max-width: 360px; }
+.hx-alert { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 16px; padding: 12px 16px; border-radius: 10px; background: #fff8e8; border: 1px solid #ecd9a9; border-left: 4px solid var(--hx-burgundy); color: var(--hx-ink) !important; text-decoration: none !important; }
+.hx-alert strong { font-size: 15px; color: var(--hx-burgundy); }
+.hx-alert span { font-size: 13px; color: #6c5f57; }
+.hx-alert:hover { background: #fff3d6; }

@@ -7,7 +7,7 @@ from django.utils.html import format_html, format_html_join
 
 from catalog.admin import image_src
 
-from .models import Customer, Order, OrderItem, Payment, normalise_phone
+from .models import Customer, Enquiry, Order, OrderItem, Payment, normalise_phone
 
 
 def ghs(amount) -> str:
@@ -337,3 +337,61 @@ class CustomerAdmin(admin.ModelAdmin):
     @admin.display(description="Contact")
     def contact(self, obj):
         return contact_buttons(obj.name, obj.phone)
+
+
+# ── Enquiries (contact / request form on the website) ─────────────────
+
+@admin.register(Enquiry)
+class EnquiryAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "status", "topic_badge", "name", "preview", "product", "needed_by", "reply")
+    list_display_links = ("created_at", "name")
+    list_editable = ("status",)
+    list_filter = ("status", "topic", "created_at")
+    search_fields = ("name", "phone", "email", "message", "product")
+    date_hierarchy = "created_at"
+    readonly_fields = ("topic", "name", "phone", "email", "message_box", "product", "needed_by", "reply", "created_at", "updated_at")
+    fieldsets = (
+        ("Enquiry", {"fields": ("status", "topic", "message_box", "product", "needed_by", "created_at")}),
+        ("Customer", {"fields": ("name", "phone", "email", "reply")}),
+        ("Notes", {"fields": ("note", "updated_at")}),
+    )
+    actions = ["mark_replied", "mark_closed"]
+
+    def has_add_permission(self, request):
+        return False  # enquiries come from the website
+
+    @admin.display(description="Topic", ordering="topic")
+    def topic_badge(self, obj):
+        return pill("priority" if obj.topic == Enquiry.Topic.REQUEST else "pending", obj.get_topic_display())
+
+    @admin.display(description="Message")
+    def preview(self, obj):
+        text = obj.message if len(obj.message) <= 90 else obj.message[:87] + "…"
+        return format_html('<span title="{}">{}</span>', obj.message, text)
+
+    @admin.display(description="Message")
+    def message_box(self, obj):
+        return format_html('<div class="hx-cnote"><p>{}</p></div>', obj.message)
+
+    @admin.display(description="Reply")
+    def reply(self, obj):
+        key = normalise_phone(obj.phone)
+        first = obj.name.split()[0] if obj.name else ""
+        about = f" about {obj.product}" if obj.product else ""
+        text = quote(f"Hi {first}, thank you for your message to Hair Xcellence{about}. ".replace("  ", " "))
+        mail = format_html(' <a class="hx-btn" href="mailto:{}">Email</a>', obj.email) if obj.email else ""
+        return format_html(
+            '<a class="hx-btn wa" href="https://wa.me/{}?text={}" target="_blank" rel="noopener">Reply on WhatsApp</a> '
+            '<a class="hx-btn" href="tel:+{}">Call</a>{}',
+            key, text, key, mail,
+        )
+
+    @admin.action(description="Mark as replied")
+    def mark_replied(self, request, queryset):
+        n = queryset.update(status=Enquiry.Status.REPLIED)
+        self.message_user(request, f"{n} enquir{'y' if n == 1 else 'ies'} marked as replied.", messages.SUCCESS)
+
+    @admin.action(description="Mark as closed")
+    def mark_closed(self, request, queryset):
+        n = queryset.update(status=Enquiry.Status.CLOSED)
+        self.message_user(request, f"{n} enquir{'y' if n == 1 else 'ies'} closed.", messages.SUCCESS)

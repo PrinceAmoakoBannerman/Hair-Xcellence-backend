@@ -35,6 +35,7 @@ class Product(models.Model):
         IN_STOCK = "In stock"
         LOW_STOCK = "Low stock"
         MADE_TO_ORDER = "Made to order"
+        SOLD_OUT = "Sold out"
 
     slug = models.SlugField(max_length=120, unique=True, help_text="Used in the product's web address.")
     name = models.CharField(max_length=150)

@@ -11,6 +11,13 @@
 {% with s=stats %}
 <div class="hx-dash-wrap">
 
+  {% if s.enquiries_new %}
+  <a class="hx-alert" href="{% url 'admin:orders_enquiry_changelist' %}?status__exact=new">
+    <strong>{{ s.enquiries_new }} new enquir{{ s.enquiries_new|pluralize:"y,ies" }}</strong>
+    <span>{% if s.requests_new %}{{ s.requests_new }} wig request{{ s.requests_new|pluralize }} · {% endif %}Reply on WhatsApp from the Enquiries page →</span>
+  </a>
+  {% endif %}
+
   {# ── Key numbers ── #}
   <section class="hx-kpis">
     <a class="hx-kpi gold" href="{% url 'admin:orders_payment_changelist' %}?payment_status__exact=paid">
