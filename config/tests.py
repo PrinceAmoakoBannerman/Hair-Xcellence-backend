@@ -2,6 +2,7 @@
 from datetime import timedelta
 from types import SimpleNamespace
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -146,3 +147,36 @@ class MiscTests(TestCase):
         with self.assertRaises(ValidationError):
             validate_photo_size(SimpleNamespace(size=11 * 1024 * 1024))
         validate_photo_size(SimpleNamespace(size=3 * 1024 * 1024))  # fine
+
+
+class ProductionStaticFilesTests(TestCase):
+    """Admin pages must render with the production static storage (hashed, compressed files)."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        import tempfile
+        cls.static_root = tempfile.mkdtemp()
+        cls.override = override_settings(
+            STATIC_ROOT=cls.static_root,
+            STORAGES={**settings.STORAGES,
+                      "staticfiles": {"BACKEND": "config.storage.StaticStorage"}},
+        )
+        cls.override.enable()
+        call_command("collectstatic", interactive=False, verbosity=0)
+
+    @classmethod
+    def tearDownClass(cls):
+        import shutil
+        cls.override.disable()
+        shutil.rmtree(cls.static_root, ignore_errors=True)
+        super().tearDownClass()
+
+    def test_admin_pages_render(self):
+        call_command("seed_products", verbosity=0)
+        self.client.force_login(User.objects.create_superuser("boss", "boss@example.com", "boss-pass-12345"))
+        product = Product.objects.first()
+        for path in ["/admin/", "/admin/orders/order/", "/admin/orders/payment/", "/admin/orders/customer/",
+                     "/admin/catalog/product/", f"/admin/catalog/product/{product.pk}/change/", "/admin/auth/user/"]:
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 200)
