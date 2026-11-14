@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -76,6 +77,28 @@ def validate_photo_size(file):
     limit = settings.MAX_PHOTO_MB * 1024 * 1024
     if file and getattr(file, "size", 0) > limit:
         raise ValidationError(f"This photo is larger than {settings.MAX_PHOTO_MB} MB. Please use a smaller one.")
+
+
+class ProductLength(models.Model):
+    """A hair length the product is offered in, and what it adds to the base price."""
+
+    product = models.ForeignKey(Product, related_name="lengths", on_delete=models.CASCADE)
+    inches = models.PositiveSmallIntegerField(validators=[MinValueValidator(4), MaxValueValidator(60)])
+    extra_price = models.DecimalField(
+        "extra price (GH₵)", max_digits=10, decimal_places=2, default=Decimal("0"),
+        help_text="Added to the base price. Usually 0 for the shortest length.",
+    )
+
+    class Meta:
+        ordering = ["inches"]
+        constraints = [models.UniqueConstraint(fields=["product", "inches"], name="unique_length_per_product")]
+
+    def __str__(self) -> str:
+        return self.label
+
+    @property
+    def label(self) -> str:
+        return f'{self.inches}"'
 
 
 class ProductImage(models.Model):

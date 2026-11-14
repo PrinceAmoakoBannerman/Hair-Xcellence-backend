@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import Product
+from .pricing import length_prices
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -15,13 +16,19 @@ class ProductSerializer(serializers.ModelSerializer):
     isNew = serializers.BooleanField(source="is_new")
     isBest = serializers.BooleanField(source="is_bestseller")
     colour = serializers.CharField(source="default_colour")
+    lengths = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
             "id", "name", "kind", "categories", "texture", "price", "sale", "availability",
             "isNew", "isBest", "tag", "image", "gallery", "short", "description", "detail", "colour", "popularity",
+            "lengths",
         ]
+
+    def get_lengths(self, obj):
+        """Lengths offered (set in the admin), each with what it adds to the base price."""
+        return [{"label": label, "price": float(price)} for label, price in length_prices(obj).items()]
 
     def _abs(self, src: str) -> str:
         """Full URL so the website (on another domain) can load the photo."""

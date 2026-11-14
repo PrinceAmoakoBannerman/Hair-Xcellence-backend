@@ -4,7 +4,9 @@ from django.contrib import admin, messages
 from django.db.models import Max
 from django.utils.html import format_html
 
-from .models import Category, Product, ProductImage, validate_photo_size
+from .models import Category, Product, ProductImage, ProductLength, validate_photo_size
+from . import cache as catalog_cache
+from .pricing import standard_lengths
 
 
 def image_src(src: str) -> str:
@@ -39,6 +41,31 @@ class ProductImageInline(admin.TabularInline):
         if db_field.name == "alt":
             kwargs["widget"] = forms.TextInput(attrs={"placeholder": "e.g. Front view"})
         return super().formfield_for_dbfield(db_field, request, **kwargs)
+
+
+class ProductLengthInline(admin.TabularInline):
+    """Lengths the product is offered in. Add a row for a new length, delete a row to stop offering it."""
+
+    model = ProductLength
+    verbose_name = "length"
+    verbose_name_plural = "Lengths"
+    extra = 1
+    fields = ("inches", "extra_price", "customer_pays")
+    readonly_fields = ("customer_pays",)
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name == "inches":
+            kwargs["widget"] = forms.NumberInput(attrs={"min": 4, "max": 60, "step": 1, "placeholder": "e.g. 34", "class": "hx-num"})
+        if db_field.name == "extra_price":
+            kwargs["widget"] = forms.NumberInput(attrs={"min": 0, "step": 10, "placeholder": "0", "class": "hx-num"})
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
+
+    @admin.display(description="Customer pays from")
+    def customer_pays(self, obj):
+        if not obj or not obj.pk:
+            return "—"
+        total = obj.product.base_price + obj.extra_price
+        return f"GH₵ {total:,.0f}"
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -76,14 +103,14 @@ class ProductForm(forms.ModelForm):
 class ProductAdmin(admin.ModelAdmin):
     form = ProductForm
     # Tabs: the photos (with "Add photos") sit right after price, in one place.
-    jazzmin_section_order = ("General", "Price & stock", "Photos", "Display")
+    jazzmin_section_order = ("General", "Price & stock", "Lengths", "Photos", "Display")
     list_display = ("thumb", "name", "kind", "base_price", "sale", "availability", "is_bestseller", "is_new", "is_active")
     list_display_links = ("thumb", "name")
     list_filter = ("kind", "availability", "is_active", "is_bestseller", "is_new", "categories")
     list_editable = ("base_price", "availability", "is_active")
     search_fields = ("name", "slug", "detail")
     prepopulated_fields = {"slug": ("name",)}
-    inlines = [ProductImageInline]
+    inlines = [ProductLengthInline, ProductImageInline]
     fieldsets = (
         ("General", {"fields": ("name", "slug", "kind", "categories", "texture", "detail")}),
         ("Price & stock", {"fields": ("base_price", "sale", "availability", "default_colour")}),
@@ -92,6 +119,14 @@ class ProductAdmin(admin.ModelAdmin):
 
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
+        product = form.instance
+        if not product.lengths.exists():
+            # Nothing entered: offer the standard lengths so the product can be bought straight away.
+            ProductLength.objects.bulk_create([
+                ProductLength(product=product, inches=inches, extra_price=price)
+                for inches, price in standard_lengths(product.kind)
+            ])
+            catalog_cache.bump()
         files = form.cleaned_data.get("photos") or []
         if not files:
             return

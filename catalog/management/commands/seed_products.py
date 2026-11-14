@@ -6,7 +6,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils.text import slugify
 
-from catalog.models import Category, Product, ProductImage
+from catalog.models import Category, Product, ProductImage, ProductLength
+from catalog.pricing import standard_lengths
 
 FIXTURE = Path(__file__).resolve().parents[2] / "fixtures" / "products.json"
 CATEGORY_ORDER = [
@@ -62,6 +63,11 @@ class Command(BaseCommand):
                 ProductImage(product=product, url=backend_path(url), alt=product.name, sort_order=i)
                 for i, url in enumerate(row.get("images", []))
             ])
+            if not product.lengths.exists():
+                ProductLength.objects.bulk_create([
+                    ProductLength(product=product, inches=inches, extra_price=price)
+                    for inches, price in standard_lengths(product.kind)
+                ])
             created += is_new
             updated += not is_new
         self.stdout.write(self.style.SUCCESS(f"Products: {created} created, {updated} updated."))

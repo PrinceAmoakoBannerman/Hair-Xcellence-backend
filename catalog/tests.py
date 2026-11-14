@@ -8,7 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from PIL import Image
 
-from .models import Category, Product, ProductImage
+from .models import Category, Product, ProductImage, ProductLength
 
 TMP_MEDIA = tempfile.mkdtemp()
 # Store test uploads in a temporary folder, never on Cloudinary.
@@ -44,6 +44,7 @@ class AdminPhotoUploadTests(TestCase):
             "sort_order": "0", "popularity": "0",
             "images-TOTAL_FORMS": str(len(existing)), "images-INITIAL_FORMS": str(len(existing)),
             "images-MIN_NUM_FORMS": "0", "images-MAX_NUM_FORMS": "1000",
+            "lengths-TOTAL_FORMS": "0", "lengths-INITIAL_FORMS": "0", "lengths-MIN_NUM_FORMS": "0", "lengths-MAX_NUM_FORMS": "1000",
             "photos": photos,
         }
         for i, img in enumerate(existing):
@@ -109,3 +110,63 @@ class AdminPhotoUploadTests(TestCase):
         self._post([photo("c.png")], existing=[a, b], **{"images-0-DELETE": "on"})
         self.assertEqual(self.product.images.count(), 2)
         self.assertFalse(ProductImage.objects.filter(pk=a.pk).exists())
+
+
+class ProductLengthTests(TestCase):
+    """Lengths are set per product in the admin; the website and checkout prices follow them."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from django.core.management import call_command
+        call_command("seed_products", verbosity=0)
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.client.force_login(get_user_model().objects.create_superuser("boss", "b@example.com", "pw-123456"))
+        self.wig = Product.objects.get(slug="hd-lace-body-wave-wig")
+
+    def _order(self, length):
+        from rest_framework.test import APIClient
+        options = {"length": length, "texture": "Body Wave", "laceType": "Transparent Lace", "laceSize": "4×4 Closure",
+                   "density": "150%", "colour": "Natural Black", "cap": "Medium", "production": "Standard"}
+        body = {"name": "Ama", "email": "ama@example.com", "phone": "0241234567", "address": "1 St", "city": "Accra",
+                "region": "Greater Accra", "delivery_method": "Accra express", "payment_method": "MTN Mobile Money",
+                "items": [{"product": self.wig.slug, "options": options, "quantity": 1}]}
+        return APIClient().post("/api/orders/", body, format="json")
+
+    def test_seeded_products_have_standard_lengths(self):
+        self.assertEqual([l.label for l in self.wig.lengths.all()][:3], ['10"', '12"', '14"'])
+        self.assertEqual(self.wig.lengths.count(), 12)
+
+    def test_new_length_appears_on_site_and_is_priced_at_checkout(self):
+        ProductLength.objects.create(product=self.wig, inches=34, extra_price=2500)
+        lengths = {l["label"]: l["price"] for l in self.client.get(f"/api/products/{self.wig.slug}/").json()["lengths"]}
+        self.assertEqual(lengths['34"'], 2500)
+        res = self._order('34"')
+        self.assertEqual(res.status_code, 201, res.content)
+        self.assertEqual(res.json()["items"][0]["unit_price"], float(self.wig.base_price) + 2500)
+
+    def test_removed_length_cannot_be_ordered(self):
+        self.wig.lengths.filter(inches=32).delete()
+        self.assertNotIn('32"', [l["label"] for l in self.client.get(f"/api/products/{self.wig.slug}/").json()["lengths"]])
+        self.assertEqual(self._order('32"').status_code, 400)
+
+    def test_price_change_applies(self):
+        self.wig.lengths.filter(inches=18).update(extra_price=999)
+        from catalog import cache as catalog_cache
+        catalog_cache.bump()
+        self.assertEqual(self._order('18"').json()["items"][0]["unit_price"], float(self.wig.base_price) + 999)
+
+    def test_admin_lengths_tab_and_defaults_for_new_product(self):
+        page = self.client.get(f"/admin/catalog/product/{self.wig.pk}/change/").content.decode()
+        self.assertIn('name="lengths-0-inches"', page)
+        self.assertIn("Customer pays from", page)
+        cat = Category.objects.first()
+        data = {"name": "Brand New Wig", "slug": "brand-new-wig", "kind": "wig", "categories": [cat.pk], "texture": "Straight",
+                "detail": "HD Lace", "base_price": "1000", "sale": "0", "availability": "In stock", "default_colour": "",
+                "tag": "", "short": "S", "description": "D", "is_active": "on", "sort_order": "0", "popularity": "0",
+                "images-TOTAL_FORMS": "0", "images-INITIAL_FORMS": "0", "images-MIN_NUM_FORMS": "0", "images-MAX_NUM_FORMS": "1000",
+                "lengths-TOTAL_FORMS": "0", "lengths-INITIAL_FORMS": "0", "lengths-MIN_NUM_FORMS": "0", "lengths-MAX_NUM_FORMS": "1000"}
+        self.assertEqual(self.client.post("/admin/catalog/product/add/", data).status_code, 302)
+        self.assertEqual(Product.objects.get(slug="brand-new-wig").lengths.count(), 12)  # standard lengths added

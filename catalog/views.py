@@ -28,7 +28,7 @@ class ProductList(generics.ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        qs = Product.objects.filter(is_active=True).prefetch_related("categories", "images")
+        qs = Product.objects.filter(is_active=True).prefetch_related("categories", "images", "lengths")
         category = self.request.query_params.get("category")
         kind = self.request.query_params.get("kind")
         if category:
@@ -50,7 +50,7 @@ class ProductDetail(generics.RetrieveAPIView):
 
     serializer_class = ProductSerializer
     lookup_field = "slug"
-    queryset = Product.objects.filter(is_active=True).prefetch_related("categories", "images")
+    queryset = Product.objects.filter(is_active=True).prefetch_related("categories", "images", "lengths")
 
     def retrieve(self, request, *args, **kwargs):
         key = cache.key(request, "detail", kwargs.get("slug", "")[:120])

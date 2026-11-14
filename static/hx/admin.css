@@ -289,3 +289,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--hx-burgundy); }
 .hx-alert strong { font-size: 15px; color: var(--hx-burgundy); }
 .hx-alert span { font-size: 13px; color: #6c5f57; }
 .hx-alert:hover { background: #fff3d6; }
+
+/* Product lengths: compact table of inches + extra price */
+#lengths-group table { width: auto; min-width: 460px; }
+#lengths-group .hx-num { width: 120px; }
+#lengths-group td.field-customer_pays p, #lengths-group td.field-customer_pays { color: #6c5f57; white-space: nowrap; }

@@ -29,8 +29,8 @@ def bump(*_args, **_kwargs) -> None:
 
 
 def connect() -> None:
-    from .models import Category, Product, ProductImage
-    for model in (Product, ProductImage, Category):
+    from .models import Category, Product, ProductImage, ProductLength
+    for model in (Product, ProductImage, ProductLength, Category):
         post_save.connect(bump, sender=model, dispatch_uid=f"catalog-cache-save-{model.__name__}")
         post_delete.connect(bump, sender=model, dispatch_uid=f"catalog-cache-delete-{model.__name__}")
     m2m_changed.connect(bump, sender=Product.categories.through, dispatch_uid="catalog-cache-m2m")

@@ -28,11 +28,25 @@ DELIVERY = {
 }
 
 
+def standard_lengths(kind: str) -> list[tuple[int, int]]:
+    """Default lengths (inches, extra GH₵) for a new product: 10"–32" in 2" steps."""
+    step = {"bundle": 60, "closure": 70}.get(kind, 180)
+    return [(10 + 2 * i, i * step) for i in range(len(LENGTHS))]
+
+
+def length_prices(product) -> dict[str, Decimal]:
+    """{'10"': extra price, …} for a product: the lengths set in the admin, or the standard ones."""
+    rows = list(product.lengths.all()) if product.pk else []
+    if rows:
+        return {row.label: Decimal(row.extra_price) for row in rows}
+    return {f'{inches}"': Decimal(price) for inches, price in standard_lengths(product.kind)}
+
+
 def option_groups(kind: str) -> dict[str, dict[str, int]]:
-    """Option group key -> {option label: price delta in GH₵} for a product kind."""
+    """Option group key -> {option label: price delta in GH₵} for a product kind (lengths come per product)."""
     step = {"bundle": 60, "closure": 70}.get(kind, 180)
     wig = kind == "wig"
-    length = {label: i * step for i, label in enumerate(LENGTHS)}
+    length = {label: i * step for i, label in enumerate(LENGTHS)}  # replaced by the product's own lengths
     texture = {
         "Straight": 0,
         "Body Wave": 0,
@@ -63,6 +77,7 @@ class PricingError(ValueError):
 def unit_price(product, choices: dict[str, str], addons: list[str]) -> Decimal:
     """Price of one unit with the given options. Raises PricingError on unknown options."""
     groups = option_groups(product.kind)
+    groups["length"] = length_prices(product)
     total = Decimal(product.base_price)
     for key, options in groups.items():
         value = choices.get(key)
