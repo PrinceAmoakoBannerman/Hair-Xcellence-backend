@@ -69,7 +69,30 @@ def items_html(order) -> str:
         '<div class="hx-grand"><dt>Total</dt><dd>{}</dd></div></dl>',
         ghs(order.subtotal), order.delivery_method, ghs(order.delivery_fee), ghs(order.total),
     )
-    return format_html('<div class="hx-items">{}{}</div>', format_html_join("", "{}", ((c,) for c in cards)), totals)
+    return format_html('<div class="hx-items">{}{}{}</div>', note_html(order), format_html_join("", "{}", ((c,) for c in cards)), totals)
+
+
+def note_html(order, label: bool = True) -> str:
+    """The customer's own note, highlighted so it isn't missed when making the wig."""
+    if not order.customer_note:
+        return ""
+    heading = format_html('<span class="hx-kpi-label">Customer’s note</span>') if label else ""
+    return format_html('<div class="hx-cnote">{}<p>{}</p></div>', heading, order.customer_note)
+
+
+class HasNoteFilter(admin.SimpleListFilter):
+    title = "customer's note"
+    parameter_name = "note"
+
+    def lookups(self, request, model_admin):
+        return [("yes", "Has a note"), ("no", "No note")]
+
+    def queryset(self, request, queryset):
+        if self.value() == "yes":
+            return queryset.exclude(customer_note="")
+        if self.value() == "no":
+            return queryset.filter(customer_note="")
+        return queryset
 
 
 def _set_status(status: str, label: str):
@@ -128,17 +151,17 @@ class ProductionFilter(admin.SimpleListFilter):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ("number", "created_at", "customer_name", "deliver_to", "total_ghs", "status", "payment_badge", "rush", "contact")
+    list_display = ("number", "created_at", "customer_name", "deliver_to", "total_ghs", "status", "payment_badge", "rush", "note_flag", "contact")
     list_display_links = ("number",)
-    list_filter = ("status", "payment_status", ProductionFilter, "delivery_method", "payment_method", "region", "city", "created_at")
+    list_filter = ("status", "payment_status", ProductionFilter, HasNoteFilter, "delivery_method", "payment_method", "region", "city", "created_at")
     list_editable = ("status",)
-    search_fields = ("number", "name", "email", "phone", "payment_reference", "address", "city")
+    search_fields = ("number", "name", "email", "phone", "payment_reference", "address", "city", "customer_note")
     date_hierarchy = "created_at"
     list_per_page = 30
     actions = ORDER_ACTIONS + PAYMENT_ACTIONS
-    readonly_fields = ("number", "items_box", "delivery_box", "customer_link", "user", "contact", "created_at", "updated_at", "paid_at", "payment_channel", "subtotal", "delivery_fee", "total")
+    readonly_fields = ("number", "customer_note_box", "items_box", "delivery_box", "customer_link", "user", "contact", "created_at", "updated_at", "paid_at", "payment_channel", "subtotal", "delivery_fee", "total")
     fieldsets = (
-        ("Order", {"fields": ("number", "status", "delivery_box", "created_at", "updated_at", "note")}),
+        ("Order", {"fields": ("number", "status", "customer_note_box", "delivery_box", "created_at", "updated_at", "note")}),
         ("Order items", {"fields": ("items_box",)}),
         ("Customer", {"fields": ("customer_link", "user", "contact", "name", "email", "phone", "address", "city", "region")}),
         ("Delivery & payment", {"fields": ("delivery_method", "delivery_fee", "payment_method", "payment_status", "payment_channel", "payment_reference", "paid_at")}),
@@ -179,6 +202,17 @@ class OrderAdmin(admin.ModelAdmin):
             '<span class="hx-addr" title="{}">{}</span><small class="hx-muted hx-place">{} · {}</small>',
             full, obj.address, place, obj.delivery_method,
         )
+
+    @admin.display(description="Customer's note")
+    def customer_note_box(self, obj):
+        return note_html(obj, label=False) or "—"
+
+    @admin.display(description="Note")
+    def note_flag(self, obj):
+        if not obj.customer_note:
+            return ""
+        short = obj.customer_note if len(obj.customer_note) <= 140 else obj.customer_note[:137] + "…"
+        return format_html('<span class="hx-pill hx-note-pill" title="{}">Note</span>', short)
 
     @admin.display(description="Items")
     def items_box(self, obj):

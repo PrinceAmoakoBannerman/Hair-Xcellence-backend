@@ -86,7 +86,11 @@ class Order(models.Model):
 
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
     total = models.DecimalField(max_digits=12, decimal_places=2)
-    note = models.TextField(blank=True, help_text="Internal note (not shown to the customer).")
+    customer_note = models.TextField(
+        "customer's note", blank=True, max_length=500,
+        help_text="Written by the customer at checkout, e.g. a date they need the wig by.",
+    )
+    note = models.TextField("internal note", blank=True, help_text="Internal note (not shown to the customer).")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -30,6 +30,10 @@ class OrderCreateSerializer(serializers.Serializer):
     delivery_method = serializers.ChoiceField(choices=list(DELIVERY))
     payment_method = serializers.ChoiceField(choices=PAYMENT_METHODS)
     items = OrderItemInSerializer(many=True)
+    customer_note = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
+
+    def validate_customer_note(self, value):
+        return value.strip()
 
     def validate_city(self, value):
         """Browser autofill sometimes puts 'Accra, Greater Accra Region, Ghana' in the city box; keep the city."""
@@ -79,6 +83,7 @@ class OrderCreateSerializer(serializers.Serializer):
             address=data["address"], city=data["city"], region=data["region"],
             delivery_method=data["delivery_method"], delivery_fee=fee,
             payment_method=data["payment_method"],
+            customer_note=data.get("customer_note", ""),
             subtotal=subtotal, total=subtotal + fee,
         )
         OrderItem.objects.bulk_create([
@@ -123,4 +128,5 @@ class OrderOutSerializer(serializers.ModelSerializer):
         fields = [
             "number", "status", "created_at", "name", "email", "phone", "address", "city", "region",
             "delivery_method", "delivery_fee", "payment_method", "payment_status", "subtotal", "total", "items",
+            "customer_note",
         ]

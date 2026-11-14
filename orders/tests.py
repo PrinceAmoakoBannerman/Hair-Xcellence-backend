@@ -147,3 +147,44 @@ class AdminFeatureTests(TestCase):
         res = self.api.post("/api/orders/", body, format="json")
         self.assertEqual(res.status_code, 201, res.content)
         self.assertEqual(res.json()["city"], "Accra")
+
+
+class CustomerNoteTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_products", verbosity=0)
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.api = APIClient()
+
+    def _order(self, **extra):
+        body = {**CUSTOMER, "items": [{"product": WIG, "options": DEFAULT_WIG_OPTIONS, "quantity": 1}], **extra}
+        return self.api.post("/api/orders/", body, format="json")
+
+    def test_note_is_saved_and_returned(self):
+        res = self._order(customer_note="  I need it by Friday for a wedding.  ")
+        self.assertEqual(res.status_code, 201, res.content)
+        self.assertEqual(res.json()["customer_note"], "I need it by Friday for a wedding.")
+        self.assertEqual(Order.objects.get(number=res.json()["number"]).customer_note, "I need it by Friday for a wedding.")
+
+    def test_note_is_optional(self):
+        res = self._order()
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(res.json()["customer_note"], "")
+
+    def test_note_length_is_limited(self):
+        self.assertEqual(self._order(customer_note="x" * 501).status_code, 400)
+
+    def test_admin_shows_and_filters_notes(self):
+        from django.contrib.auth import get_user_model
+        with_note = Order.objects.get(number=self._order(customer_note="Please call before delivery <b>").json()["number"])
+        without = Order.objects.get(number=self._order().json()["number"])
+        self.client.force_login(get_user_model().objects.create_superuser("boss", "b@example.com", "pw-123456"))
+        page = self.client.get(f"/admin/orders/order/{with_note.pk}/change/").content.decode()
+        self.assertIn("Please call before delivery &lt;b&gt;", page)  # shown, and safely escaped
+        listing = self.client.get("/admin/orders/order/", {"note": "yes"}).content.decode()
+        self.assertIn(with_note.number, listing)
+        self.assertIn('hx-note-pill" title="Please call before delivery &lt;b&gt;">Note</span>', listing)
+        self.assertNotIn(without.number, listing)

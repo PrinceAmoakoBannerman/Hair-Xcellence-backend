@@ -273,3 +273,9 @@ input[type=checkbox], input[type=radio] { accent-color: var(--hx-burgundy); }
 .hx-photo-fields input { width: 100%; padding: 4px 8px; border: 1px solid #e4d6c3; border-radius: 6px; font-size: 13px; color: var(--hx-ink); background: #fff; }
 .hx-photo-link summary { font-size: 12px; color: #8a7a70; cursor: pointer; }
 .hx-photo-link input { width: 100%; margin-top: 6px; padding: 4px 8px; border: 1px solid #e4d6c3; border-radius: 6px; font-size: 12px; }
+
+/* Customer's note from checkout */
+.hx-cnote { max-width: 720px; padding: 12px 16px; border: 1px solid #ecd9a9; border-left: 3px solid var(--hx-burgundy); border-radius: 8px; background: #fff8e8; }
+.hx-cnote p { margin: 4px 0 0; font-size: 15px; line-height: 1.5; color: var(--hx-ink); white-space: pre-line; }
+.field-customer_note_box .readonly { padding: 0; background: none; border: 0; }
+.hx-note-pill { background: #fff1d6; color: #8a5a00; cursor: help; }
